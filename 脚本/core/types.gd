@@ -5,6 +5,7 @@
 enum Phase {
 	DEALING = 0,
 	ALL_ARRANGING = 1,
+	CROWN = 2,
 	BETTING = 3,
 	ALL_DECIDING = 4,
 	BANKER_QUEUE = 5,
