@@ -82,9 +82,9 @@ static func should_reveal_challenger(ch_idx: int, cs: Dictionary, banker_arr: Di
 	var banker_hand: String = CompareUtil.get_hand_type(banker_arr)
 	var banker_shuiyu: bool = (banker_hand == Types.HAND_SHUIYU or banker_hand == Types.HAND_SHUIYU_TIANTANG)
 
-	# Qianggong: challenger does NOT reveal cards — banker chooses door blindly
+	# Qianggong: challenger reveals cards after banker chooses door
 	if dec == Types.DECISION_QIANGGONG:
-		return false
+		return true
 
 	if dec == Types.DECISION_TANPAI:
 		return true
