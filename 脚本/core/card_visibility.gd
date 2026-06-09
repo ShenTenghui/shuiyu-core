@@ -46,12 +46,11 @@ static func get_card_flags(
 
 	var dec: String = str(cs.get("decision", ""))
 
-	# Qianggong: reveal 1 card (flip_index) unless already revealed
+	# Qianggong: all face down (no card reveal — banker chooses door, doesn't see cards)
 	if dec == Types.DECISION_QIANGGONG:
 		if revealed_ids.has(idx):
 			return [false, false, false, false]
-		var flip: int = cs.get("qianggong_flip_index", -1)
-		return [flip != 0, flip != 1, flip != 2, flip != 3]
+		return [true, true, true, true]
 
 	# Angong: all face down until revealed
 	if dec == Types.DECISION_ANGONG:
@@ -83,10 +82,9 @@ static func should_reveal_challenger(ch_idx: int, cs: Dictionary, banker_arr: Di
 	var banker_hand: String = CompareUtil.get_hand_type(banker_arr)
 	var banker_shuiyu: bool = (banker_hand == Types.HAND_SHUIYU or banker_hand == Types.HAND_SHUIYU_TIANTANG)
 
+	# Qianggong: challenger does NOT reveal cards — banker chooses door blindly
 	if dec == Types.DECISION_QIANGGONG:
-		if banker_shuiyu:
-			return false
-		return true
+		return false
 
 	if dec == Types.DECISION_TANPAI:
 		return true
@@ -118,6 +116,16 @@ static func get_compare_mode(cs: Dictionary) -> Dictionary:
 
 	var dec: String = str(cs.get("decision", ""))
 
+	if dec == Types.DECISION_QIANGGONG:
+		# Banker chose which door(s) to compare
+		var bk_choice: String = str(cs.get("qianggong_banker_choice", ""))
+		if bk_choice == Types.QIANG_GONG_BI_TOU:
+			return {"mode": CompareMode.HEAD_ONLY, "has_head": true, "has_tail": false}
+		if bk_choice == Types.QIANG_GONG_BI_WEI:
+			return {"mode": CompareMode.TAIL_ONLY, "has_head": false, "has_tail": true}
+		# bi_shuang or default → full compare
+		return {"mode": CompareMode.FULL, "has_head": true, "has_tail": true}
+
 	if dec == Types.DECISION_TANPAI:
 		var ch_choice: String = str(cs.get("tanpaiChallengerChoice", ""))
 		var pass_choice: String = str(cs.get("tanpaiPassChoice", ""))
@@ -135,5 +143,5 @@ static func get_compare_mode(cs: Dictionary) -> Dictionary:
 			return {"mode": CompareMode.NONE, "has_head": false, "has_tail": false}
 		return {"mode": CompareMode.FULL, "has_head": true, "has_tail": true}
 
-	# Qianggong or no decision → full compare
+	# Default → full compare
 	return {"mode": CompareMode.FULL, "has_head": true, "has_tail": true}
