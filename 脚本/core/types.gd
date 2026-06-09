@@ -35,6 +35,11 @@ const TANPAI_CHALLENGER_FAN_BOTH := "fan_both"
 const TANPAI_PASS_GUO := "guo"
 const TANPAI_PASS_YINGYAO := "yingyao"
 
+# -- Qianggong banker choices --
+const QIANG_GONG_BI_TOU := "bi_tou"
+const QIANG_GONG_BI_WEI := "bi_wei"
+const QIANG_GONG_BI_SHUANG := "bi_shuang"
+
 # -- Angong choices --
 const ANGONG_OPEN := "open"
 const ANGONG_NOT_OPEN := "not_open"
