@@ -62,11 +62,29 @@ static func settle_double_zero_zoushui() -> Dictionary:
 	return { "scoreChange": 0, "message": "闲家双零走水，双方平局！" }
 
 
-# Qianggong settlement
-static func settle_qianggong(compare_result: int) -> Dictionary:
-	if compare_result == Types.COMPARE_BANKER_LOSE_BOTH:
-		return { "scoreChange": -2, "message": "[强攻] 闲家强攻成功（两门都赢），闲家+2，庄家-2" }
-	return { "scoreChange": 2, "message": "[强攻] 闲家强攻失败，庄家+2，闲家-2" }
+# Qianggong settlement — banker chooses which door(s) to compare
+# bi_tou: challenger must win head → ±2
+# bi_wei: challenger must win tail → ±2
+# bi_shuang: challenger must win both → +4/-2 (asymmetric: banker punishes more for wrong call)
+static func settle_qianggong(compare_result: int, banker_choice: String) -> Dictionary:
+	var head_won: bool = (compare_result == Types.COMPARE_BANKER_LOSE_HEAD_WIN_TAIL or compare_result == Types.COMPARE_BANKER_LOSE_BOTH)
+	var tail_won: bool = (compare_result == Types.COMPARE_BANKER_WIN_HEAD_LOSE_TAIL or compare_result == Types.COMPARE_BANKER_LOSE_BOTH)
+	var both_won: bool = (compare_result == Types.COMPARE_BANKER_LOSE_BOTH)
+
+	if banker_choice == Types.QIANG_GONG_BI_TOU:
+		if head_won:
+			return { "scoreChange": -2, "message": "[强攻·比头] 闲家鱼头胜，强攻成功！闲家+2，庄家-2" }
+		return { "scoreChange": 2, "message": "[强攻·比头] 闲家鱼头败，强攻失败！庄家+2，闲家-2" }
+
+	if banker_choice == Types.QIANG_GONG_BI_WEI:
+		if tail_won:
+			return { "scoreChange": -2, "message": "[强攻·比尾] 闲家鱼尾胜，强攻成功！闲家+2，庄家-2" }
+		return { "scoreChange": 2, "message": "[强攻·比尾] 闲家鱼尾败，强攻失败！庄家+2，闲家-2" }
+
+	# bi_shuang: asymmetric — challenger +4 if wins both, -2 if loses
+	if both_won:
+		return { "scoreChange": -4, "message": "[强攻·比双] 闲家两门皆胜！闲家+4，庄家-4" }
+	return { "scoreChange": 2, "message": "[强攻·比双] 闲家未全胜，强攻失败！庄家+2，闲家-2" }
 
 
 # Angong — banker does NOT open (challenger auto +1)
