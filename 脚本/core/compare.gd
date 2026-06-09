@@ -38,6 +38,8 @@ static func compare_arrangements(banker: Dictionary, challenger: Dictionary) -> 
 
 # Detect hand type, strongest to weakest: shuiyu_tiantang > shuiyu > double_zero > normal
 static func get_hand_type(arrangement: Dictionary) -> String:
+	if arrangement.is_empty() or not arrangement.has("headResult"):
+		return Types.HAND_NORMAL
 	var head_is_pair: bool = arrangement.headResult.type == Types.GROUP_PAIR
 	var tail_is_pair: bool = arrangement.tailResult.type == Types.GROUP_PAIR
 
