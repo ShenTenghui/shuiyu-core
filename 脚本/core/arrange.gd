@@ -39,15 +39,34 @@ static func generate_arrangements(cards: Array) -> Array:
 				"desc": "鱼头: " + str(head[0].rank) + str(head[0].suit) + " " + str(head[1].rank) + str(head[1].suit) + " (" + head_desc + ") → 鱼尾: " + str(tail[0].rank) + str(tail[0].suit) + " " + str(tail[1].rank) + str(tail[1].suit) + " (" + tail_desc + ")",
 			})
 
+	# v9.5: 过滤被压制的排列 (dominated arrangements)
+	# 排列A压制B: A的头>B的头 且 A的尾>B的尾
+	# 被压制的排列永远不会是最优选择
+	var filtered: Array = []
+	for i in range(arrangements.size()):
+		var a: Dictionary = arrangements[i]
+		var dominated: bool = false
+		for j in range(arrangements.size()):
+			if i == j: continue
+			var b: Dictionary = arrangements[j]
+			var h_cmp: int = EvaluateUtil.compare_groups(b.headResult, a.headResult)
+			var t_cmp: int = EvaluateUtil.compare_groups(b.tailResult, a.tailResult)
+			# b 在头尾上都 ≥ a, 且至少一处 > → a 被压制
+			if h_cmp >= 0 and t_cmp >= 0 and (h_cmp > 0 or t_cmp > 0):
+				dominated = true
+				break
+		if not dominated:
+			filtered.append(a)
+
 	# Sort: strongest head first; equal heads → strongest tail first
-	arrangements.sort_custom(func(a, b):
+	filtered.sort_custom(func(a, b):
 		var head_cmp: int = EvaluateUtil.compare_groups(b.headResult, a.headResult)
 		if head_cmp != 0:
 			return head_cmp < 0
 		return EvaluateUtil.compare_groups(b.tailResult, a.tailResult) < 0
 	)
 
-	return arrangements
+	return filtered
 
 
 # Pick the best (first) arrangement
