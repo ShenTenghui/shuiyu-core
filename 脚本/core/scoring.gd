@@ -81,10 +81,7 @@ static func settle_qianggong(compare_result: int, banker_choice: String) -> Dict
 			return { "scoreChange": -2, "message": "[强攻·比尾] 闲家鱼尾胜，强攻成功！闲家+2，庄家-2" }
 		return { "scoreChange": 2, "message": "[强攻·比尾] 闲家鱼尾败，强攻失败！庄家+2，闲家-2" }
 
-	# bi_shuang: asymmetric — challenger +4 if wins both, -2 if loses
-	if both_won:
-		return { "scoreChange": -4, "message": "[强攻·比双] 闲家两门皆胜！闲家+4，庄家-4" }
-	return { "scoreChange": 2, "message": "[强攻·比双] 闲家未全胜，强攻失败！庄家+2，闲家-2" }
+	# bi_shuang removed — 规则改为仅比头/比尾
 
 
 # Angong — banker does NOT open (challenger auto +1)
