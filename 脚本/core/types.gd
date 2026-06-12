@@ -38,7 +38,7 @@ const TANPAI_PASS_YINGYAO := "yingyao"
 # -- Qianggong banker choices --
 const QIANG_GONG_BI_TOU := "bi_tou"
 const QIANG_GONG_BI_WEI := "bi_wei"
-const QIANG_GONG_BI_SHUANG := "bi_shuang"
+# QIANG_GONG_BI_SHUANG removed — 规则改为仅比头/比尾
 
 # -- Angong choices --
 const ANGONG_OPEN := "open"
