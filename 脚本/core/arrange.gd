@@ -9,7 +9,8 @@ const EvaluateUtil = preload("res://脚本/core/evaluate.gd")
 # Rule: pick 2 for fishHead (C(4,2)=6 combos), remaining 2 are fishTail.
 # Fish head must be > fish tail (strictly greater).
 # v9.5.4: Filters dominated arrangements, but keeps double-zero (走水 option).
-static func generate_arrangements(cards: Array) -> Array:
+# Phase1: sort_result=false 保持combo迭代顺序，与策略表DB顺序对齐
+static func generate_arrangements(cards: Array, sort_result: bool = true) -> Array:
 	var arrangements: Array = []
 	var combos: Array = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
 
@@ -61,12 +62,14 @@ static func generate_arrangements(cards: Array) -> Array:
 			filtered.append(a)
 
 	# Sort: strongest head first; equal heads → strongest tail first
-	filtered.sort_custom(func(a, b):
-		var head_cmp: int = EvaluateUtil.compare_groups(b.headResult, a.headResult)
-		if head_cmp != 0:
-			return head_cmp < 0
-		return EvaluateUtil.compare_groups(b.tailResult, a.tailResult) < 0
-	)
+	# Phase1: sort_result=false 跳过排序以匹配策略表DB的combo迭代顺序
+	if sort_result:
+		filtered.sort_custom(func(a, b):
+			var head_cmp: int = EvaluateUtil.compare_groups(b.headResult, a.headResult)
+			if head_cmp != 0:
+				return head_cmp < 0
+			return EvaluateUtil.compare_groups(b.tailResult, a.tailResult) < 0
+		)
 
 	return filtered
 
