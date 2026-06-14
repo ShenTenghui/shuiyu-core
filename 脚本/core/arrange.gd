@@ -40,6 +40,21 @@ static func generate_arrangements(cards: Array, sort_result: bool = true) -> Arr
 				"desc": "鱼头: " + str(head[0].rank) + str(head[0].suit) + " " + str(head[1].rank) + str(head[1].suit) + " (" + head_desc + ") → 鱼尾: " + str(tail[0].rank) + str(tail[0].suit) + " " + str(tail[1].rank) + str(tail[1].suit) + " (" + tail_desc + ")",
 			})
 
+	# Phase2fix: 等价去重 — 同头同尾同比较特征的排列只保留第一个
+	# 确保Godot排列数与策略表hand_db一致, 避免arr_idx索引错位
+	var unique: Array = []
+	for i in range(arrangements.size()):
+		var a: Dictionary = arrangements[i]
+		var dup := false
+		for j in range(unique.size()):
+			var b: Dictionary = unique[j]
+			if EvaluateUtil.compare_groups(a.headResult, b.headResult) == 0 and \
+			   EvaluateUtil.compare_groups(a.tailResult, b.tailResult) == 0:
+				dup = true; break
+		if not dup:
+			unique.append(a)
+	arrangements = unique
+
 	# v9.5.4: 过滤被压制的排列。例外: 双零不压制 — 走水选项使其价值独立于纯牌力比较
 	var filtered: Array = []
 	for i in range(arrangements.size()):
