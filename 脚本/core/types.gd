@@ -24,6 +24,7 @@ const HAND_NORMAL := "normal"
 const DECISION_QIANGGONG := "qianggong"
 const DECISION_ANGONG := "angong"
 const DECISION_TANPAI := "tanpai"
+const DECISION_ZOUSHUI := "zoushui"
 
 # -- Tanpai choices --
 const TANPAI_BANKER_GIVE := "give"
