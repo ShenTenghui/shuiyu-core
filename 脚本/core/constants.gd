@@ -40,3 +40,12 @@ const RANK_DISPLAY := {
 	"2": "2", "3": "3", "4": "4", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9",
 	"10": "10", "J": "J", "Q": "Q", "K": "K", "A": "A",
 }
+
+# ── 游戏规则分值 (单一数据源) ──
+const QG_TOU: float = 2.0
+const QG_WEI: float = 2.0
+# QG_SHUANG removed — 规则改为仅比头/比尾
+const A_ANGONG: float = 3.0
+const C_TANPAI: float = 2.0
+const F_TANPAI_FAN: float = 2.0
+const D_TANPAI_FAN_SHUANG: float = 4.0
