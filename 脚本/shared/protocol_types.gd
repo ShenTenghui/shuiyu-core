@@ -33,6 +33,14 @@ const EVT_LOBBY_STATE_CHANGED         := 200
 const EVT_LOBBY_MATCHMAKING_ENTERED   := 201
 const EVT_LOBBY_MATCHMAKING_LEFT      := 202
 
+# ── Room (M1C Day2) ──
+
+const CMD_ROOM_LEAVE        := 12
+
+const EVT_ROOM_CREATED      := 300
+const EVT_ROOM_LEFT         := 301
+const EVT_ROOM_CLOSED       := 302
+
 # ── Auth error codes ──
 
 const ERR_AUTH_INVALID_CREDENTIALS := "AUTH_INVALID_CREDENTIALS"
