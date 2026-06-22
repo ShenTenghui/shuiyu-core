@@ -56,7 +56,7 @@ func init(room_id: String, player_names: Array[String]) -> bool:
 		seen[nm] = true
 
 	game_id = room_id
-	_dealer = GameDealer.new()
+	_dealer = _GD.new()
 	_rounds_per_cycle = floori(52.0 / 16.0)
 
 	players.clear()
