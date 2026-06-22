@@ -296,34 +296,6 @@ func _test_decision_hidden_before_announce() -> void:
 
 	_report("T9: decision hidden before announce, visible after")
 
-func _drive_banker_queue_only() -> void:
-	while _gc.has_pending_challenger():
-		var item: Dictionary = _gc.get_current_challenger()
-		var ci: int = item.idx
-		var action: String = item.action
-		match action:
-			Types.DECISION_QIANGGONG:
-				var bk_arr: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
-				var choice: String = DecisionUtil.ai_qianggong_banker_choice(bk_arr, _gc.banker_idx)
-				_gc.submit_qianggong(ci, choice)
-			Types.DECISION_TANPAI:
-				var ch_arr: Dictionary = _gc.get_player_arrangement(ci)
-				var bk_arr2: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
-				var bk_choice: String = DecisionUtil.ai_tanpai_banker_choice(ch_arr, bk_arr2, ci)
-				var pass_choice: String = ""
-				if bk_choice == Types.TANPAI_BANKER_GIVE:
-					pass_choice = DecisionUtil.ai_tanpai_pass_choice(ch_arr, _gc.banker_idx)
-				else:
-					var fan_choice: String = DecisionUtil.ai_tanpai_challenger_choice(ch_arr, _gc.banker_idx)
-				var hf: int = -1
-				var tf: int = -1
-				_gc.submit_tanpai(ci, bk_choice, pass_choice, "", hf, tf)
-			Types.DECISION_ANGONG:
-				var bk_arr3: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
-				var ag_choice: String = DecisionUtil.ai_angong_choice(bk_arr3, _gc.banker_idx)
-				_gc.submit_angong(ci, ag_choice)
-
-
 func _verify_snapshots_clean(label: String) -> void:
 	var fstate: Dictionary = _gc.export_full_state()
 	var snaps: Array = _sync.generate_snapshots(fstate)
