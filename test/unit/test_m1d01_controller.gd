@@ -189,8 +189,8 @@ func _run_banker_queue(rnd: int) -> void:
 					"Round %d: tanpai P%d" % [rnd, ci])
 
 			Types.DECISION_ANGONG:
-				var bk_arr := _gc.get_player_arrangement(_gc.banker_idx)
-				var choice := DecisionUtil.ai_angong_choice(bk_arr, _gc.banker_idx)
+				var bk_arr: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
+				var choice: String = DecisionUtil.ai_angong_choice(bk_arr, _gc.banker_idx)
 				assert_true(_gc.submit_angong(ci, choice), "Round %d: angong P%d" % [rnd, ci])
 
 
