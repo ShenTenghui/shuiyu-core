@@ -212,10 +212,10 @@ func _test_controller_no_gamestate_dep() -> void:
 	# 确认 controller 的方法是自包含的（不抛 GameState 相关错误）
 	gc.start_round()
 	for i in range(4):
-		var cards := gc.get_player_cards(i)
-		var idx := DecisionUtil.ai_arrange_index(cards, gc.banker_idx)
-		var arrs := ArrangeUtil.generate_arrangements(cards, false)
-		var arr := arrs[idx] if idx < arrs.size() else arrs[0]
+		var cards: Array = gc.get_player_cards(i)
+		var idx: int = DecisionUtil.ai_arrange_index(cards, gc.banker_idx)
+		var arrs: Array = ArrangeUtil.generate_arrangements(cards, false)
+		var arr: Dictionary = arrs[idx] if idx < arrs.size() else arrs[0]
 		var hc: Array = arr.fishHead
 		var tc: Array = arr.fishTail
 		var hi := _find_card_indices(cards, hc)
