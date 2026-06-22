@@ -242,6 +242,81 @@ func _test_full_game_snapshots() -> void:
 	_report("T8: full 12-round snapshot audit")
 
 
+# T9: 提交决策后宣告前 — 对手快照 decision 必须为空
+func _test_decision_hidden_before_announce() -> void:
+	_setup_game()
+	_gc.start_round()
+	_drive_arrangements()
+	_drive_bets()
+
+	# P1 强攻, P2 摊牌, P3 尚未提交 → 仍在 ALL_DECIDING
+	_gc.submit_decision(1, "qianggong")
+	_gc.submit_decision(2, "tanpai")
+	# P3 暂不提交 → phase 仍为 ALL_DECIDING, announced 未设
+
+	var fstate: Dictionary = _gc.export_full_state()
+	var snaps: Array = _sync.generate_snapshots(fstate)
+
+	# P0 (庄家) 的视角: P1/P2 决策应为空（尚未宣告）
+	assert_eq(snaps[0].players[1].decision, "", "P0 snap: P1 decision hidden before announce")
+	assert_eq(snaps[0].players[2].decision, "", "P0 snap: P2 decision hidden before announce")
+
+	# P3 的视角: P1/P2 决策应为空
+	assert_eq(snaps[3].players[1].decision, "", "P3 snap: P1 decision hidden")
+	assert_eq(snaps[3].players[2].decision, "", "P3 snap: P2 decision hidden")
+
+	# P1 自己能看到自己的决策
+	assert_eq(snaps[1].players[1].decision, "qianggong", "P1 snap: own decision visible")
+	# P2 自己能看到自己的决策
+	assert_eq(snaps[2].players[2].decision, "tanpai", "P2 snap: own decision visible")
+
+	# 现在让 P3 也提交 → 宣告完成 → 所有决策可见
+	_gc.submit_decision(3, "tanpai")
+	# 处理 banker queue（宣告发生）
+	_drive_banker_queue()
+
+	var fstate2: Dictionary = _gc.export_full_state()
+	var snaps2: Array = _sync.generate_snapshots(fstate2)
+
+	# 宣告后，四份快照都应看到 P1/P2 的决策
+	for snap_idx in range(4):
+		if snap_idx != 1:
+			assert_eq(snaps2[snap_idx].players[1].decision, "qianggong",
+				"after announce snap%d: P1 decision visible" % snap_idx)
+		if snap_idx != 2:
+			assert_eq(snaps2[snap_idx].players[2].decision, "tanpai",
+				"after announce snap%d: P2 decision visible" % snap_idx)
+
+	_report("T9: decision hidden before announce, visible after")
+
+func _drive_banker_queue_only() -> void:
+	while _gc.has_pending_challenger():
+		var item: Dictionary = _gc.get_current_challenger()
+		var ci: int = item.idx
+		var action: String = item.action
+		match action:
+			Types.DECISION_QIANGGONG:
+				var bk_arr: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
+				var choice: String = DecisionUtil.ai_qianggong_banker_choice(bk_arr, _gc.banker_idx)
+				_gc.submit_qianggong(ci, choice)
+			Types.DECISION_TANPAI:
+				var ch_arr: Dictionary = _gc.get_player_arrangement(ci)
+				var bk_arr2: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
+				var bk_choice: String = DecisionUtil.ai_tanpai_banker_choice(ch_arr, bk_arr2, ci)
+				var pass_choice: String = ""
+				if bk_choice == Types.TANPAI_BANKER_GIVE:
+					pass_choice = DecisionUtil.ai_tanpai_pass_choice(ch_arr, _gc.banker_idx)
+				else:
+					var fan_choice: String = DecisionUtil.ai_tanpai_challenger_choice(ch_arr, _gc.banker_idx)
+				var hf: int = -1
+				var tf: int = -1
+				_gc.submit_tanpai(ci, bk_choice, pass_choice, "", hf, tf)
+			Types.DECISION_ANGONG:
+				var bk_arr3: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
+				var ag_choice: String = DecisionUtil.ai_angong_choice(bk_arr3, _gc.banker_idx)
+				_gc.submit_angong(ci, ag_choice)
+
+
 func _verify_snapshots_clean(label: String) -> void:
 	var fstate: Dictionary = _gc.export_full_state()
 	var snaps: Array = _sync.generate_snapshots(fstate)
