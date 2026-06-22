@@ -55,7 +55,10 @@ func _build_snapshot(fs: Dictionary, your_pos: int) -> Dictionary:
 		sp.decision = _clip_decision(src, cs, i, your_pos, phase, revealed, announced)
 
 		# revealed flag
-		sp.revealed = revealed[i] if i < revealed.size() else false
+		if i == your_pos:
+				sp.revealed = true
+			else:
+				sp.revealed = _is_arr_visible(i, your_pos, phase, cs, revealed, announced)
 
 		snap_players.append(sp)
 
