@@ -573,6 +573,49 @@ func _build_arrangement(cards: Array, head_idx: Array, tail_idx: Array) -> Dicti
 	}
 
 
+# M1D-02: 深拷贝只读导出 — GameSync 的唯一数据入口
+func export_full_state() -> Dictionary:
+	var pdata: Array = []
+	for i in range(4):
+		var p: Dictionary = players[i]
+		var arr: Dictionary = p.arrangement.duplicate(true) if not p.arrangement.is_empty() else {}
+		var cs_src: Dictionary = _ch_state.get(i, {})
+		var cs_copy: Dictionary = {}
+		if not cs_src.is_empty():
+			for key in cs_src.keys():
+				var v = cs_src[key]
+				if v is Array:
+					cs_copy[key] = v.duplicate(true)
+				elif v is Dictionary:
+					cs_copy[key] = v.duplicate(true)
+				else:
+					cs_copy[key] = v
+		pdata.append({
+			"name": p.name,
+			"position": p.position,
+			"score": p.score,
+			"is_banker": p.is_banker,
+			"cards": p.cards.duplicate(true),
+			"arrangement": arr,
+			"bet_amount": p.bet_amount,
+			"decision": p.decision,
+			"challenger_state": cs_copy,
+		})
+
+	return {
+		"game_id": game_id,
+		"phase": phase,
+		"current_round": current_round,
+		"banker_idx": banker_idx,
+		"players": pdata,
+		"deck": deck.duplicate(true),
+		"round_results": round_results.duplicate(true),
+		"final_standings": final_standings.duplicate(true),
+		"revealed": _revealed.duplicate(),
+		"announced": _announced.duplicate(),
+	}
+
+
 func _add_log(msg: String) -> void:
 	log.append(msg)
 	print("[GC:%s] %s" % [game_id, msg])
