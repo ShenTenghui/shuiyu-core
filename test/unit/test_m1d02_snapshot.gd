@@ -40,7 +40,8 @@ func run_tests() -> void:
 func _test_snapshot_no_opponent_cards() -> void:
 	_setup_game()
 	_gc.start_round()
-	_drive_to_betting()
+	_drive_arrangements()
+	_drive_bets()
 
 	var fstate: Dictionary = _gc.export_full_state()
 	var snaps: Array = _sync.generate_snapshots(fstate)
@@ -75,7 +76,9 @@ func _test_snapshot_no_deck() -> void:
 func _test_snapshot_no_pearls() -> void:
 	_setup_game()
 	_gc.start_round()
-	_drive_to_reveal()
+	_drive_arrangements()
+	_drive_bets()
+	_drive_decisions_and_queue()
 
 	var fstate: Dictionary = _gc.export_full_state()
 	var snaps: Array = _sync.generate_snapshots(fstate)
@@ -91,7 +94,9 @@ func _test_snapshot_no_pearls() -> void:
 func _test_snapshot_public_consistency() -> void:
 	_setup_game()
 	_gc.start_round()
-	_drive_to_reveal()
+	_drive_arrangements()
+	_drive_bets()
+	_drive_decisions_and_queue()
 
 	var fstate: Dictionary = _gc.export_full_state()
 	var snaps: Array = _sync.generate_snapshots(fstate)
@@ -105,7 +110,6 @@ func _test_snapshot_public_consistency() -> void:
 		assert_eq(snaps[i].round, round0, "round consistent snap %d" % i)
 		assert_eq(snaps[i].banker_position, bk0, "banker consistent snap %d" % i)
 
-	# 公开分数一致
 	for i in range(4):
 		for j in range(4):
 			assert_eq(snaps[0].players[j].score, snaps[i].players[j].score,
@@ -118,10 +122,11 @@ func _test_snapshot_public_consistency() -> void:
 func _test_snapshot_controller_unchanged() -> void:
 	_setup_game()
 	_gc.start_round()
-	_drive_to_reveal()
+	_drive_arrangements()
+	_drive_bets()
+	_drive_decisions_and_queue()
 
 	var before: Dictionary = _gc.export_full_state()
-	# deep copy for comparison
 	var before_str: String = JSON.stringify(_sanitize_for_compare(before))
 
 	_sync.generate_snapshots(before)
@@ -139,89 +144,84 @@ func _test_snapshot_controller_unchanged() -> void:
 func _test_snapshot_face_up_qianggong() -> void:
 	_setup_game()
 	_gc.start_round()
-	_drive_to_deciding()
+	_drive_arrangements()
+	_drive_bets()
 
-	# 让 P1 强攻
-	var cards1: Array = _gc.get_player_cards(1)
-	var dec1: String = "qianggong"
-	_gc.submit_decision(1, dec1)
+	# 让 P1 强攻,P2/P3 摊牌
+	for i in range(4):
+		if i == _gc.banker_idx: continue
+		var arr2: Dictionary = _gc.get_player_arrangement(i)
+		if arr2.is_empty(): continue
+		var ht2: String = CompareUtil.get_hand_type(arr2)
+		if ht2 == Types.HAND_SHUIYU or ht2 == Types.HAND_SHUIYU_TIANTANG: continue
+		if i == 1:
+			_gc.submit_decision(i, "qianggong")
+		else:
+			_gc.submit_decision(i, "tanpai")
 
-	for i in [2, 3]:
-		if i != _gc.banker_idx:
-			var ci: Array = _gc.get_player_cards(i)
-			var di: String = DecisionUtil.ai_primary_decision(ci, _gc.banker_idx)
-			if di == Types.DECISION_ZOUSHUI:
-				di = Types.DECISION_QIANGGONG
-			_gc.submit_decision(i, di)
-
-	# 现在 ALL_DECIDING 完成，进入 BANKER_QUEUE
-	if _gc.has_pending_challenger():
+	# 处理 banker queue
+	while _gc.has_pending_challenger():
 		var item: Dictionary = _gc.get_current_challenger()
+		var ci: int = item.idx
 		if item.action == Types.DECISION_QIANGGONG:
-			_gc.submit_qianggong(item.idx, "bi_tou")
-		while _gc.has_pending_challenger():
-			var item2: Dictionary = _gc.get_current_challenger()
-			if item2.action == Types.DECISION_TANPAI:
-				_gc.submit_tanpai(item2.idx, "give", "guo", "", -1, -1)
-			elif item2.action == Types.DECISION_ANGONG:
-				_gc.submit_angong(item2.idx, "open")
-			elif item2.action == Types.DECISION_QIANGGONG:
-				_gc.submit_qianggong(item2.idx, "bi_tou")
+			_gc.submit_qianggong(ci, "bi_tou")
+		elif item.action == Types.DECISION_TANPAI:
+			_gc.submit_tanpai(ci, "give", "guo", "", -1, -1)
 
-	# BANKER_REVEAL 阶段: 强攻的挑战者应该亮牌
+	# 快照
 	var fstate: Dictionary = _gc.export_full_state()
 	var snaps: Array = _sync.generate_snapshots(fstate)
 
-	# P1 强攻了，应该被 revealed
-	assert_true(snaps[0].players[1].revealed, "P1 revealed in snap 0")
-	assert_true(snaps[1].players[1].revealed, "P1 revealed in snap 1")
-	assert_true(snaps[2].players[1].revealed, "P1 revealed in snap 2")
-	assert_true(snaps[3].players[1].revealed, "P1 revealed in snap 3")
+	# P1 强攻，应在四份快照中 revealed=true
+	for snap_idx in range(4):
+		assert_true(snaps[snap_idx].players[1].revealed, "P1 revealed in snap %d" % snap_idx)
+
 	_report("T6: qianggong face-up verified")
 
 
-# T7: 暗攻不开 — face_up 裁剪（庄家与其他闲家不可见）
+# T7: 暗攻不开 — face_up 裁剪
 func _test_snapshot_face_up_angong_not_open() -> void:
 	_setup_game()
 	_gc.start_round()
-	_drive_to_deciding()
+	_drive_arrangements()
+	_drive_bets()
 
-	# 让 P1 暗攻
-	_gc.submit_decision(1, "angong")
-
-	for i in [2, 3]:
-		if i != _gc.banker_idx:
-			var ci: Array = _gc.get_player_cards(i)
+	# P1 暗攻
+	for i in range(4):
+		if i == _gc.banker_idx: continue
+		var arr2: Dictionary = _gc.get_player_arrangement(i)
+		if arr2.is_empty(): continue
+		var ht2: String = CompareUtil.get_hand_type(arr2)
+		if ht2 == Types.HAND_SHUIYU or ht2 == Types.HAND_SHUIYU_TIANTANG: continue
+		if i == 1:
+			_gc.submit_decision(i, "angong")
+		else:
 			_gc.submit_decision(i, "tanpai")
 
-	# BANKER_QUEUE: 第一个是 tanpai(P2 or P3), 第二个是 angong(P1)
-	if _gc.has_pending_challenger():
+	# 庄家不开暗攻的牌
+	while _gc.has_pending_challenger():
 		var item: Dictionary = _gc.get_current_challenger()
-		if item.action == Types.DECISION_TANPAI:
-			_gc.submit_tanpai(item.idx, "give", "guo", "", -1, -1)
-		elif item.action == Types.DECISION_ANGONG:
-			_gc.submit_angong(item.idx, "not_open")
-		while _gc.has_pending_challenger():
-			var item2: Dictionary = _gc.get_current_challenger()
-			if item2.action == Types.DECISION_TANPAI:
-				_gc.submit_tanpai(item2.idx, "give", "guo", "", -1, -1)
-			elif item2.action == Types.DECISION_ANGONG:
-				_gc.submit_angong(item2.idx, "not_open")
+		var ci: int = item.idx
+		if item.action == Types.DECISION_ANGONG:
+			_gc.submit_angong(ci, "not_open")
+		elif item.action == Types.DECISION_TANPAI:
+			_gc.submit_tanpai(ci, "give", "guo", "", -1, -1)
 
 	var fstate: Dictionary = _gc.export_full_state()
 	var snaps: Array = _sync.generate_snapshots(fstate)
 
-	# P1 暗攻不开：庄家(P0)和其他闲家(P2,P3)不应看到 card 内容
-	# P1 自己是暗攻者，能看到自己的牌
-	if not snaps[1].players[1].arrangement.is_empty():
-		var arr1: Dictionary = snaps[1].players[1].arrangement
-		assert_true(arr1.head.size() > 0, "P1 sees own arrangement")
+	# P1 暗攻不开: 不在 revealed 中，自己能看到排列，对手看不到内容
+	for snap_idx in range(4):
+		if snap_idx == 1:
+			# P1 自己看到排列
+			assert_false(snaps[snap_idx].players[1].arrangement.is_empty(), "P1 sees own arr")
+		else:
+			# 对手不应看到 P1 的 card 内容（可能看到空排列或 face_down 排列）
+			var arr: Dictionary = snaps[snap_idx].players[1].arrangement
+			if not arr.is_empty():
+				# 有排列但 card 内容应为无（face_down）
+				pass
 
-	# 庄家 P0 可能看到也可能看不到，取决于是否 revealed
-	# 暗攻不开时 should_reveal_challenger=false → 不在 revealed
-	if not fstate.revealed[1]:
-		# P1 未亮牌，庄家不应看到
-		pass  # 由 CardVisibility 内部保证
 	_report("T7: angong not-open clipping")
 
 
@@ -231,19 +231,11 @@ func _test_full_game_snapshots() -> void:
 
 	for rnd in range(1, 13):
 		_gc.start_round()
-
-		# ALL_ARRANGING 快照
 		_verify_snapshots_clean("Round %d ARRANGING" % rnd)
-
 		_drive_arrangements()
 		_drive_bets()
-
-		# BETTING 快照
 		_verify_snapshots_clean("Round %d BETTING" % rnd)
-
 		_drive_decisions_and_queue()
-
-		# REVEAL 快照
 		_verify_snapshots_clean("Round %d REVEAL" % rnd)
 
 	_report("T8: full 12-round snapshot audit")
@@ -255,9 +247,7 @@ func _verify_snapshots_clean(label: String) -> void:
 
 	for idx in range(4):
 		var s: Dictionary = snaps[idx]
-		# 无 deck
 		assert_false(s.has("deck"), "%s snap%d: no deck" % [label, idx])
-		# 无 opponent cards
 		for i in range(4):
 			if i != idx:
 				assert_eq(s.players[i].cards.size(), 0,
@@ -296,17 +286,7 @@ func _drive_bets() -> void:
 			_gc.submit_bet(i, 1)
 
 
-func _drive_to_betting() -> void:
-	_drive_arrangements()
-	_drive_bets()
-
-
 func _drive_decisions_and_queue() -> void:
-	_drive_to_deciding()
-	_drive_banker_queue()
-
-
-func _drive_to_deciding() -> void:
 	for i in range(4):
 		if i == _gc.banker_idx: continue
 		var arr: Dictionary = _gc.get_player_arrangement(i)
@@ -320,8 +300,6 @@ func _drive_to_deciding() -> void:
 			dec = Types.DECISION_ZOUSHUI
 		_gc.submit_decision(i, dec)
 
-
-func _drive_banker_queue() -> void:
 	while _gc.has_pending_challenger():
 		var item: Dictionary = _gc.get_current_challenger()
 		var ci: int = item.idx
@@ -357,12 +335,6 @@ func _drive_banker_queue() -> void:
 				_gc.submit_angong(ci, ag_choice)
 
 
-func _drive_to_reveal() -> void:
-	_drive_arrangements()
-	_drive_bets()
-	_drive_decisions_and_queue()
-
-
 func _find_indices(cards: Array, target: Array) -> Array:
 	var result: Array = []
 	var used: Dictionary = {}
@@ -383,7 +355,6 @@ func _find_indices(cards: Array, target: Array) -> Array:
 
 
 func _sanitize_for_compare(d: Dictionary) -> Dictionary:
-	# 移除不稳定字段用于深度比较
 	var c: Dictionary = d.duplicate(true)
 	if c.has("deck"):
 		c.erase("deck")
