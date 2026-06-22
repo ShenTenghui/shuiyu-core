@@ -84,20 +84,19 @@ func _test_full_12_rounds() -> void:
 
 		# ALL_ARRANGING
 		for i in range(4):
-			var cards := _gc.get_player_cards(i)
+			var cards: Array = _gc.get_player_cards(i)
 			assert_eq(cards.size(), 4)
 			var idx: int
 			if i == _gc.banker_idx:
 				idx = DecisionUtil.ai_banker_arrange_index(cards)
 			else:
 				idx = DecisionUtil.ai_arrange_index(cards, _gc.banker_idx)
-			var arrs := ArrangeUtil.generate_arrangements(cards, false)
+			var arrs: Array = ArrangeUtil.generate_arrangements(cards, false)
 			var arr: Dictionary = arrs[idx] if idx < arrs.size() else arrs[0]
 			var head_cards: Array = arr.get("fishHead", [])
 			var tail_cards: Array = arr.get("fishTail", [])
-			# 找到 head/tail 在 cards 中的索引
-			var hi := _find_card_indices(cards, head_cards)
-			var ti := _find_card_indices(cards, tail_cards)
+			var hi: Array = _find_card_indices(cards, head_cards)
+			var ti: Array = _find_card_indices(cards, tail_cards)
 			assert_true(_gc.submit_arrangement(i, hi, ti), "Round %d: submit arrangement P%d" % [rnd, i])
 
 		# BETTING
