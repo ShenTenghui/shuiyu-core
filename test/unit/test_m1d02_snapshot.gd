@@ -33,6 +33,7 @@ func run_tests() -> void:
 	_test_snapshot_controller_unchanged()
 	_test_snapshot_face_up_qianggong()
 	_test_snapshot_face_up_angong_not_open()
+	_test_decision_hidden_before_announce()
 	_test_full_game_snapshots()
 
 
