@@ -7,8 +7,9 @@ const GD = preload("res://脚本/server/game_dealer.gd")
 const ArrangeUtil = preload("res://脚本/core/arrange.gd")
 const DecisionUtil = preload("res://脚本/core/decision.gd")
 const Types = preload("res://脚本/core/types.gd")
+const CompareUtil = preload("res://脚本/core/compare.gd")
 
-var _gc: GameController
+var _gc: RefCounted
 var _pass := 0
 var _fail := 0
 var _total_score := 0
