@@ -47,7 +47,7 @@ var _pending_bet: int = 0
 var _pending_decide: int = 0
 
 
-func init(room_id: String, player_names: Array[String]) -> bool:
+func init(room_id: String, player_names: Array) -> bool:
 	if room_id.is_empty(): return false
 	if player_names.size() != 4: return false
 	var seen: Dictionary = {}
