@@ -134,16 +134,13 @@ func _is_arr_visible(pos: int, your_pos: int, phase: int, cs: Dictionary, reveal
 
 
 func _clip_decision(src: Dictionary, cs: Dictionary, pos: int, your_pos: int, phase: int, revealed: Array, announced: Array) -> String:
-	var dec: String = cs.get("decision", "")
-	# 自己可以看到自己的决策
-	if pos == your_pos: return dec
-	# 已宣告
-	if announced[pos]:
-		return dec
-	# 暗攻未开 — 不公开
-	if dec == Types.DECISION_ANGONG and cs.get("angongChoice") == Types.ANGONG_NOT_OPEN and not revealed[pos]:
-		return ""
-	return dec if not dec.is_empty() else ""
+	# 自己始终看到自己的决策
+	if pos == your_pos:
+		return cs.get("decision", "")
+	# 对手决策仅在明确公开后可见：已宣告 或 GAME_OVER
+	if announced[pos] or phase == Types.Phase.GAME_OVER:
+		return cs.get("decision", "")
+	return ""
 
 
 func _deep_copy_cards(cards: Array) -> Array:
