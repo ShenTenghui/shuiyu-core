@@ -188,8 +188,8 @@ func _test_controller_no_gamestate_dep() -> void:
 		var idx: int = DecisionUtil.ai_arrange_index(cards, gc.banker_idx)
 		var arrs: Array = ArrangeUtil.generate_arrangements(cards, false)
 		var arr: Dictionary = arrs[idx] if idx < arrs.size() else arrs[0]
-		var hc: Array = arr.fishHead
-		var tc: Array = arr.fishTail
+		var hc: Array = arr.get("fishHead", [])
+		var tc: Array = arr.get("fishTail", [])
 		var hi: Array = _find_card_indices(cards, hc)
 		var ti: Array = _find_card_indices(cards, tc)
 		gc.submit_arrangement(i, hi, ti)
