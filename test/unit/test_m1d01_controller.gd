@@ -269,5 +269,3 @@ func _report(name: String) -> void:
 	_pass += 1
 
 
-# 预加载依赖以便编译
-const CompareUtil = preload("res://脚本/core/compare.gd")
