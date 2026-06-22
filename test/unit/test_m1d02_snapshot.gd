@@ -272,8 +272,15 @@ func _test_decision_hidden_before_announce() -> void:
 
 	# 现在让 P3 也提交 → 宣告完成 → 所有决策可见
 	_gc.submit_decision(3, "tanpai")
-	# 处理 banker queue（宣告发生）
-	_drive_banker_queue()
+	# 处理 banker queue（宣告发生后，决策应对所有人可见）
+	while _gc.has_pending_challenger():
+		var qi: Dictionary = _gc.get_current_challenger()
+		var qci: int = qi.idx
+		if qi.action == Types.DECISION_QIANGGONG:
+			var qba: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
+			_gc.submit_qianggong(qci, DecisionUtil.ai_qianggong_banker_choice(qba, _gc.banker_idx))
+		elif qi.action == Types.DECISION_TANPAI:
+			_gc.submit_tanpai(qci, "give", "guo", "", -1, -1)
 
 	var fstate2: Dictionary = _gc.export_full_state()
 	var snaps2: Array = _sync.generate_snapshots(fstate2)
