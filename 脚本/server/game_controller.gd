@@ -33,7 +33,7 @@ var round_results: Array = []
 var final_standings: Array = []
 var log: Array[String] = []
 
-var _dealer: GameDealer
+var _dealer: RefCounted
 var _banker_queue: Array = []
 var _queue_idx: int = 0
 var _ch_state: Dictionary = {}
