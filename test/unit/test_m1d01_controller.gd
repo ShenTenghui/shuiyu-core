@@ -154,14 +154,14 @@ func _run_decisions(rnd: int) -> void:
 
 func _run_banker_queue(rnd: int) -> void:
 	while _gc.has_pending_challenger():
-		var item := _gc.get_current_challenger()
+		var item: Dictionary = _gc.get_current_challenger()
 		var ci: int = item.idx
 		var action: String = item.action
 
 		match action:
 			Types.DECISION_QIANGGONG:
-				var bk_arr := _gc.get_player_arrangement(_gc.banker_idx)
-				var choice := DecisionUtil.ai_qianggong_banker_choice(bk_arr, _gc.banker_idx)
+				var bk_arr: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
+				var choice: String = DecisionUtil.ai_qianggong_banker_choice(bk_arr, _gc.banker_idx)
 				assert_true(_gc.submit_qianggong(ci, choice), "Round %d: qianggong P%d" % [rnd, ci])
 
 			Types.DECISION_TANPAI:
