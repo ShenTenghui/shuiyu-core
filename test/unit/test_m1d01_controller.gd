@@ -165,11 +165,11 @@ func _run_banker_queue(rnd: int) -> void:
 				assert_true(_gc.submit_qianggong(ci, choice), "Round %d: qianggong P%d" % [rnd, ci])
 
 			Types.DECISION_TANPAI:
-				var ch_arr := _gc.get_player_arrangement(ci)
-				var bk_arr := _gc.get_player_arrangement(_gc.banker_idx)
-				var bk_choice := DecisionUtil.ai_tanpai_banker_choice(ch_arr, bk_arr, ci)
-				var pass_choice := ""
-				var fan_choice := ""
+				var ch_arr: Dictionary = _gc.get_player_arrangement(ci)
+				var bk_arr: Dictionary = _gc.get_player_arrangement(_gc.banker_idx)
+				var bk_choice: String = DecisionUtil.ai_tanpai_banker_choice(ch_arr, bk_arr, ci)
+				var pass_choice: String = ""
+				var fan_choice: String = ""
 				var hf := -1
 				var tf := -1
 
