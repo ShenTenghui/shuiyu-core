@@ -139,14 +139,14 @@ func _test_full_12_rounds() -> void:
 func _run_decisions(rnd: int) -> void:
 	for i in range(4):
 		if i == _gc.banker_idx: continue
-		var arr := _gc.get_player_arrangement(i)
+		var arr: Dictionary = _gc.get_player_arrangement(i)
 		if arr.is_empty(): continue
-		var ht := CompareUtil.get_hand_type(arr)
+		var ht: String = CompareUtil.get_hand_type(arr)
 		if ht == Types.HAND_SHUIYU or ht == Types.HAND_SHUIYU_TIANTANG:
-			continue  # 水鱼自动跳过
+			continue
 
-		var cards := _gc.get_player_cards(i)
-		var dec := DecisionUtil.ai_primary_decision(cards, _gc.banker_idx)
+		var cards: Array = _gc.get_player_cards(i)
+		var dec: String = DecisionUtil.ai_primary_decision(cards, _gc.banker_idx)
 		if dec == Types.DECISION_ZOUSHUI:
 			dec = Types.DECISION_ZOUSHUI
 		assert_true(_gc.submit_decision(i, dec), "Round %d: submit decision P%d=%s" % [rnd, i, dec])
