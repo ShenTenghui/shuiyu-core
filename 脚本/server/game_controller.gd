@@ -3,6 +3,7 @@
 class_name GameController
 extends RefCounted
 
+const _GD = preload("res://脚本/server/game_dealer.gd")
 const Types = preload("res://脚本/core/types.gd")
 const ArrangeUtil = preload("res://脚本/core/arrange.gd")
 const CompareUtil = preload("res://脚本/core/compare.gd")
