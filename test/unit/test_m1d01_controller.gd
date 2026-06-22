@@ -195,8 +195,8 @@ func _run_banker_queue(rnd: int) -> void:
 
 
 func _verify_round_scores(rnd: int) -> void:
-	var scores := _gc.get_scores()
-	var total := 0
+	var scores: Array = _gc.get_scores()
+	var total: int = 0
 	for s in scores:
 		total += s
 	assert_eq(total, 0, "Round %d: scores sum to zero (was %d)" % [rnd, total])
