@@ -30,7 +30,7 @@ class SessionData:
 
 # ── Lifecycle ──
 
-func create_game(room_id: String, player_ids: Array[String]) -> bool:
+func create_game(room_id: String, player_ids: Array) -> bool:
 	if room_id.is_empty() or player_ids.size() != 4:
 		return false
 	if _sessions.has(room_id):
