@@ -188,47 +188,41 @@ func _test_angong_not_open_all_face_down() -> void:
 	_report("T7: angong not-open — own face_up, opponents face_down no rank/suit")
 
 
-# T8 (P1): 摊牌不给过 → 反鱼头，只有鱼头亮牌
+# T8 (P1): 宣告后、亮牌前 — 对手快照全部 face_down + 无 rank/suit
+# 在 ALL_DECIDING 阶段提交所有决策后（已宣告）但未处理庄家队列（未亮牌）时生成快照
 func _test_tanpai_fan_head_partial_reveal() -> void:
 	_setup_game()
 	_gc.start_round()
 	_drive_arrangements(); _drive_bets()
+	# 全部提交决策 → 进入宣告 → ALL_DECIDING 完成，但尚未进入 BANKER_QUEUE
 	for i in range(4):
 		if i == _gc.banker_idx: continue
 		var arr: Dictionary = _gc.get_player_arrangement(i)
 		if arr.is_empty(): continue
 		var ht: String = CompareUtil.get_hand_type(arr)
 		if ht == Types.HAND_SHUIYU or ht == Types.HAND_SHUIYU_TIANTANG: continue
-		_gc.submit_decision(i, "tanpai" if i == 1 else "tanpai")
+		_gc.submit_decision(i, "tanpai")
 
-	while _gc.has_pending_challenger():
-		var qi: Dictionary = _gc.get_current_challenger()
-		if qi.idx == 1 and qi.action == Types.DECISION_TANPAI:
-			_gc.submit_tanpai(1, "not_give", "", "fan_head", 0, -1)
-		elif qi.action == Types.DECISION_TANPAI:
-			_gc.submit_tanpai(qi.idx, "give", "guo", "", -1, -1)
-
+	# 此时已宣告(announced)但尚未亮牌(revealed)，仍在 BANKER_QUEUE/BANKER_REVEAL 之前
 	var snaps: Array = _sync.generate_snapshots(_gc.export_full_state())
 
-	# P1 自己的快照：全部 face_up
+	# P1 自己的快照：全部 face_up + rank/suit
 	var own2: Dictionary = snaps[1].players[1].arrangement
+	assert_false(own2.is_empty(), "P1 own arr visible")
 	for card in own2.head + own2.tail:
-		assert_true(card.face_up, "P1 own all face_up")
+		assert_true(card.face_up, "P1 own face_up")
+		assert_true(card.has("rank") and not card.rank.is_empty(), "P1 own rank")
 
-	# 对手快照 (P0, P2, P3): P1 鱼头 face_up+rank/suit, 鱼尾 face_down+no rank/suit
+	# 对手快照 (P0, P2, P3): 已宣告但未亮牌 → 全部 face_down + 无 rank/suit
 	for snap_idx in [0, 2, 3]:
 		var arr: Dictionary = snaps[snap_idx].players[1].arrangement
-		assert_false(arr.is_empty(), "P1 arr visible snap %d" % snap_idx)
-		for card in arr.head:
-			assert_true(card.face_up, "head face_up snap %d" % snap_idx)
-			assert_true(card.has("rank") and not card.rank.is_empty(), "head rank")
-			assert_true(card.has("suit") and not card.suit.is_empty(), "head suit")
-		for card in arr.tail:
-			assert_false(card.face_up, "tail face_down snap %d" % snap_idx)
-			assert_false(card.has("rank"), "tail no rank snap %d" % snap_idx)
-			assert_false(card.has("suit"), "tail no suit snap %d" % snap_idx)
+		assert_false(arr.is_empty(), "P1 arr visible (announced) snap %d" % snap_idx)
+		for card in arr.head + arr.tail:
+			assert_false(card.face_up, "face_down snap %d" % snap_idx)
+			assert_false(card.has("rank"), "no rank snap %d" % snap_idx)
+			assert_false(card.has("suit"), "no suit snap %d" % snap_idx)
 
-	_report("T8: tanpai fan_head — head visible, tail hidden no rank/suit")
+	_report("T8: announced but not revealed — all face_down, no rank/suit leak")
 
 
 # T9: 决策宣告前隐藏
