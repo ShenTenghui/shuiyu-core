@@ -37,9 +37,31 @@ const EVT_LOBBY_MATCHMAKING_LEFT      := 202
 
 const CMD_ROOM_LEAVE        := 12
 
+# ── Game (M1D-03) ──
+
+const CMD_GAME_ARRANGE          := 13
+const CMD_GAME_BET              := 14
+const CMD_GAME_DECIDE           := 15
+const CMD_GAME_TANPAI_BANKER    := 16
+const CMD_GAME_TANPAI_PASS      := 17
+const CMD_GAME_TANPAI_CHALLENGER := 18
+const CMD_GAME_ANGONG           := 19
+const CMD_GAME_QIANGGONG_BANKER := 20
+
 const EVT_ROOM_CREATED      := 300
 const EVT_ROOM_LEFT         := 301
 const EVT_ROOM_CLOSED       := 302
+
+# ── Game events (M1D-03) ──
+
+const EVT_GAME_CREATED      := 400
+const EVT_GAME_CARDS_DEALT  := 401
+const EVT_GAME_PHASE_CHANGED := 402
+const EVT_GAME_PLAYER_ACTION := 403
+const EVT_GAME_ROUND_RESULT  := 404
+const EVT_GAME_MATCH_FINISHED := 405
+const EVT_GAME_STATE_SYNC    := 406
+const EVT_GAME_SNAPSHOT      := 407
 
 # ── Auth error codes ──
 
@@ -53,3 +75,10 @@ const ERR_AUTH_ACCOUNT_BANNED      := "AUTH_ACCOUNT_BANNED"
 const ERR_AUTH_ACCOUNT_LOCKED      := "AUTH_ACCOUNT_LOCKED"
 const ERR_INVALID_PARAMS           := "INVALID_PARAMS"
 const ERR_INTERNAL                 := "INTERNAL_ERROR"
+
+# ── Game error codes (M1D-03) ──
+
+const ERR_GAME_NOT_YOUR_TURN      := "GAME_NOT_YOUR_TURN"
+const ERR_GAME_INVALID_ACTION     := "GAME_INVALID_ACTION"
+const ERR_GAME_INVALID_ARRANGEMENT := "GAME_INVALID_ARRANGEMENT"
+const ERR_GAME_NOT_IN_GAME        := "GAME_NOT_IN_GAME"
