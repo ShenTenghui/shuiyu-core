@@ -298,7 +298,7 @@ func _verify_clean(label: String) -> void:
 			if i != idx:
 				assert_eq(s.players[i].cards.size(), 0, "%s snap%d: P%d cards 0" % [label, idx, i])
 			else:
-				assert_eq(s.players[i].cards.size(), 4, "%s snap%d: own cards" % [label, idx, i])
+				assert_eq(s.players[i].cards.size(), 4, "%s snap%d: own cards present" % [label, idx])
 
 
 # ── helpers ──
