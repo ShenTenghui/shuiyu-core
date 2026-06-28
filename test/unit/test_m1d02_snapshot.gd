@@ -220,25 +220,32 @@ func _test_tanpai_fan_head_partial_reveal() -> void:
 		assert_true(card.has("rank") and not card.rank.is_empty(), "own rank present")
 	assert_true(own.has("desc") and not own.desc.is_empty(), "own desc present")
 
-	# 对手快照 (非 ci): 被反门有 face_up+rank/suit，隐藏门 face_down+无 rank/suit，desc 为空
+	# 对手快照: fan_head(h_flip=0) → flags=[true,false,false,false]
+	# head[0]:fd=true=hidden, head[1]:fd=false=visible, tail:both fd=false=visible
 	for snap_idx in range(4):
 		if snap_idx == ci: continue
 		var arr: Dictionary = snaps[snap_idx].players[ci].arrangement
 		assert_false(arr.is_empty(), "arr visible snap %d" % snap_idx)
 
-		# 至少有一张 face_up（被反门）
-		var has_face_up: bool = false
-		for card in arr.head + arr.tail:
-			if card.face_up:
-				has_face_up = true
-				assert_true(card.has("rank") and not card.rank.is_empty(), "face_up has rank")
-				assert_true(card.has("suit") and not card.suit.is_empty(), "face_up has suit")
-			else:
-				assert_false(card.has("rank"), "face_down no rank snap %d" % snap_idx)
-				assert_false(card.has("suit"), "face_down no suit snap %d" % snap_idx)
-		assert_true(has_face_up, "at least one face_up card snap %d" % snap_idx)
+		# head[0] face_down, no rank/suit
+		assert_false(arr.head[0].face_up, "head[0] face_down snap %d" % snap_idx)
+		assert_false(arr.head[0].has("rank"), "head[0] no rank snap %d" % snap_idx)
+		assert_false(arr.head[0].has("suit"), "head[0] no suit snap %d" % snap_idx)
 
-		# desc 必须为空（部分可见时不能泄露隐藏门牌型）
+		# head[1] face_up, has rank/suit
+		assert_true(arr.head[1].face_up, "head[1] face_up snap %d" % snap_idx)
+		assert_true(arr.head[1].has("rank") and not arr.head[1].rank.is_empty(), "head[1] rank snap %d" % snap_idx)
+		assert_true(arr.head[1].has("suit") and not arr.head[1].suit.is_empty(), "head[1] suit snap %d" % snap_idx)
+
+		# tail[0] face_up (CardVisibility t_flip=-1 → t_flip==0=false → fd=false), rank/suit present
+		assert_true(arr.tail[0].face_up, "tail[0] face_up snap %d" % snap_idx)
+		assert_true(arr.tail[0].has("rank") and not arr.tail[0].rank.is_empty(), "tail[0] rank snap %d" % snap_idx)
+
+		# tail[1] face_up
+		assert_true(arr.tail[1].face_up, "tail[1] face_up snap %d" % snap_idx)
+		assert_true(arr.tail[1].has("rank") and not arr.tail[1].rank.is_empty(), "tail[1] rank snap %d" % snap_idx)
+
+		# desc 为空（部分可见）
 		assert_false(arr.has("desc") and not arr.desc.is_empty(), "desc empty snap %d" % snap_idx)
 
 	_report("T8: tanpai fan_head — partial reveal, hidden door no rank/suit, desc empty")
