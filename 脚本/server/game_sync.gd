@@ -153,8 +153,9 @@ func _card_to_dict(card, face_down: bool) -> Dictionary:
 
 func _clip_desc(arr: Dictionary, pos: int, your_pos: int, flags: Array) -> String:
 	if pos == your_pos: return arr.get("desc", "")
-	if _all_face_down(flags): return ""
-	return arr.get("desc", "")
+	# 对手: 仅全部 face_up 时才公开 desc；部分可见时可能泄露隐藏门牌型
+	if not _any_face_down(flags): return arr.get("desc", "")
+	return ""
 
 
 func _all_face_down(flags: Array) -> bool:
