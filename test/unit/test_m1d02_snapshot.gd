@@ -188,34 +188,60 @@ func _test_angong_not_open_all_face_down() -> void:
 	_report("T7: angong not-open — own face_up, opponents face_down no rank/suit")
 
 
-# T8 (P1): 提交决策后宣告前 — 对手快照 arrangement 为空（未宣告不可见）
-# 在 ALL_DECIDING 阶段 P1/P2 已提交但 P3 未提交 → 尚未进入宣告
+# T8 (P1): tanpai + not_give + fan_head → BANKER_QUEUE 阶段部分亮牌
+# 在庄家队列处理 P1 后但未完成全部队列时，被反门 face_up+rank/suit，隐藏门 face_down+无 rank/suit，desc 不泄露
 func _test_tanpai_fan_head_partial_reveal() -> void:
 	_setup_game()
 	_gc.start_round()
 	_drive_arrangements(); _drive_bets()
-	# P1 提交但 P3 不提交 → 仍为 ALL_DECIDING，未宣告
+	# 全部提交 tanpai，让 P1 在队列中排第一
 	for i in range(4):
 		if i == _gc.banker_idx: continue
 		var arr: Dictionary = _gc.get_player_arrangement(i)
 		if arr.is_empty(): continue
 		var ht: String = CompareUtil.get_hand_type(arr)
 		if ht == Types.HAND_SHUIYU or ht == Types.HAND_SHUIYU_TIANTANG: continue
-		if i == 3: continue  # P3 不提交
 		_gc.submit_decision(i, "tanpai")
 
-	# 此时 phase=ALL_DECIDING，P1 未宣告 → 对手不应看到 arrangement
+	# 只处理 P1（队列第一项）：not_give + fan_head + head_flip=0
+	# 不处理 P2/P3 → phase 保持 BANKER_QUEUE
+	var qi: Dictionary = _gc.get_current_challenger()
+	assert_true(qi.action == Types.DECISION_TANPAI, "first item is tanpai")
+	_gc.submit_tanpai(qi.idx, "not_give", "", "fan_head", 0, -1)
+
+	# BANKER_QUEUE 阶段生成快照
 	var snaps: Array = _sync.generate_snapshots(_gc.export_full_state())
+	var ci: int = qi.idx
 
-	# P1 自己看到 arrangement
-	assert_false(snaps[1].players[1].arrangement.is_empty(), "P1 own arr visible")
+	# 自己的快照：全部 face_up+rank/suit+desc
+	var own: Dictionary = snaps[ci].players[ci].arrangement
+	for card in own.head + own.tail:
+		assert_true(card.face_up, "own face_up")
+		assert_true(card.has("rank") and not card.rank.is_empty(), "own rank present")
+	assert_true(own.has("desc") and not own.desc.is_empty(), "own desc present")
 
-	# 对手 (P0, P2, P3) 不应看到 P1 的 arrangement（未宣告）
-	for snap_idx in [0, 2, 3]:
-		var arr: Dictionary = snaps[snap_idx].players[1].arrangement
-		assert_true(arr.is_empty(), "P1 arr hidden snap %d (not announced)" % snap_idx)
+	# 对手快照 (非 ci): 被反门有 face_up+rank/suit，隐藏门 face_down+无 rank/suit，desc 为空
+	for snap_idx in range(4):
+		if snap_idx == ci: continue
+		var arr: Dictionary = snaps[snap_idx].players[ci].arrangement
+		assert_false(arr.is_empty(), "arr visible snap %d" % snap_idx)
 
-	_report("T8: not announced — arrangement hidden from opponents")
+		# 至少有一张 face_up（被反门）
+		var has_face_up: bool = false
+		for card in arr.head + arr.tail:
+			if card.face_up:
+				has_face_up = true
+				assert_true(card.has("rank") and not card.rank.is_empty(), "face_up has rank")
+				assert_true(card.has("suit") and not card.suit.is_empty(), "face_up has suit")
+			else:
+				assert_false(card.has("rank"), "face_down no rank snap %d" % snap_idx)
+				assert_false(card.has("suit"), "face_down no suit snap %d" % snap_idx)
+		assert_true(has_face_up, "at least one face_up card snap %d" % snap_idx)
+
+		# desc 必须为空（部分可见时不能泄露隐藏门牌型）
+		assert_false(arr.has("desc") and not arr.desc.is_empty(), "desc empty snap %d" % snap_idx)
+
+	_report("T8: tanpai fan_head — partial reveal, hidden door no rank/suit, desc empty")
 
 
 # T9: 决策宣告前隐藏
