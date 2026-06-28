@@ -59,7 +59,7 @@ func _build_snapshot(fs: Dictionary, your_pos: int) -> Dictionary:
 		if i == your_pos:
 			sp.revealed = true
 		else:
-			sp.revealed = _is_arr_visible(i, your_pos, phase, src, revealed_ids, announced_ids)
+			sp.revealed = _is_arr_visible_by_pos(i, your_pos, phase, src, revealed_ids, announced_ids)
 
 		snap_players.append(sp)
 
