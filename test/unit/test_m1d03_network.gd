@@ -378,13 +378,13 @@ func _test_tanpai_multi_step() -> void:
 
 func _test_full_12_round_network_flow() -> void:
 	_setup_fresh()
+	var gc: RefCounted = _gsm.get_controller(ROOM_ID)
 	for rnd in range(1, 13):
 		_drive_arrange_all()
 		_drive_bets()
 		_drive_decisions()
 		_drive_banker_queue()
 
-		var gc: RefCounted = _gsm.get_controller(ROOM_ID)
 		var scores: Array = gc.get_scores()
 		var total: int = 0
 		for s in scores:
