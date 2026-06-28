@@ -123,8 +123,7 @@ func _is_arr_visible_by_pos(pos: int, your_pos: int, phase: int, src: Dictionary
 
 
 # M1D-02 P1: 对手决策仅在宣告后可见
-func _clip_decision(src: Dictionary, _cs: Dictionary, pos: int, your_pos: int, phase: int,
-		_revealed: Array, announced: Array) -> String:
+func _clip_decision(src: Dictionary, pos: int, your_pos: int, phase: int, announced: Array) -> String:
 	if pos == your_pos:
 		return src.get("challenger_state", {}).get("decision", "")
 	if (announced[pos] if pos < announced.size() else false) or phase == Types.Phase.GAME_OVER:
