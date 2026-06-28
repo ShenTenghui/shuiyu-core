@@ -122,12 +122,6 @@ func _is_arr_visible_by_pos(pos: int, your_pos: int, phase: int, src: Dictionary
 	return false
 
 
-# 内部使用，接收 bool 数组（仅 decision 裁剪用）
-func _is_arr_visible(pos: int, your_pos: int, phase: int, src: Dictionary,
-		revealed_ids: Array, announced_ids: Array) -> bool:
-	return _is_arr_visible_by_pos(pos, your_pos, phase, src, revealed_ids, announced_ids)
-
-
 # M1D-02 P1: 对手决策仅在宣告后可见
 func _clip_decision(src: Dictionary, _cs: Dictionary, pos: int, your_pos: int, phase: int,
 		_revealed: Array, announced: Array) -> String:
