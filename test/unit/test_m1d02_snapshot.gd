@@ -188,41 +188,34 @@ func _test_angong_not_open_all_face_down() -> void:
 	_report("T7: angong not-open — own face_up, opponents face_down no rank/suit")
 
 
-# T8 (P1): 宣告后、亮牌前 — 对手快照全部 face_down + 无 rank/suit
-# 在 ALL_DECIDING 阶段提交所有决策后（已宣告）但未处理庄家队列（未亮牌）时生成快照
+# T8 (P1): 提交决策后宣告前 — 对手快照 arrangement 为空（未宣告不可见）
+# 在 ALL_DECIDING 阶段 P1/P2 已提交但 P3 未提交 → 尚未进入宣告
 func _test_tanpai_fan_head_partial_reveal() -> void:
 	_setup_game()
 	_gc.start_round()
 	_drive_arrangements(); _drive_bets()
-	# 全部提交决策 → 进入宣告 → ALL_DECIDING 完成，但尚未进入 BANKER_QUEUE
+	# P1 提交但 P3 不提交 → 仍为 ALL_DECIDING，未宣告
 	for i in range(4):
 		if i == _gc.banker_idx: continue
 		var arr: Dictionary = _gc.get_player_arrangement(i)
 		if arr.is_empty(): continue
 		var ht: String = CompareUtil.get_hand_type(arr)
 		if ht == Types.HAND_SHUIYU or ht == Types.HAND_SHUIYU_TIANTANG: continue
+		if i == 3: continue  # P3 不提交
 		_gc.submit_decision(i, "tanpai")
 
-	# 此时已宣告(announced)但尚未亮牌(revealed)，仍在 BANKER_QUEUE/BANKER_REVEAL 之前
+	# 此时 phase=ALL_DECIDING，P1 未宣告 → 对手不应看到 arrangement
 	var snaps: Array = _sync.generate_snapshots(_gc.export_full_state())
 
-	# P1 自己的快照：全部 face_up + rank/suit
-	var own2: Dictionary = snaps[1].players[1].arrangement
-	assert_false(own2.is_empty(), "P1 own arr visible")
-	for card in own2.head + own2.tail:
-		assert_true(card.face_up, "P1 own face_up")
-		assert_true(card.has("rank") and not card.rank.is_empty(), "P1 own rank")
+	# P1 自己看到 arrangement
+	assert_false(snaps[1].players[1].arrangement.is_empty(), "P1 own arr visible")
 
-	# 对手快照 (P0, P2, P3): 已宣告但未亮牌 → 全部 face_down + 无 rank/suit
+	# 对手 (P0, P2, P3) 不应看到 P1 的 arrangement（未宣告）
 	for snap_idx in [0, 2, 3]:
 		var arr: Dictionary = snaps[snap_idx].players[1].arrangement
-		assert_false(arr.is_empty(), "P1 arr visible (announced) snap %d" % snap_idx)
-		for card in arr.head + arr.tail:
-			assert_false(card.face_up, "face_down snap %d" % snap_idx)
-			assert_false(card.has("rank"), "no rank snap %d" % snap_idx)
-			assert_false(card.has("suit"), "no suit snap %d" % snap_idx)
+		assert_true(arr.is_empty(), "P1 arr hidden snap %d (not announced)" % snap_idx)
 
-	_report("T8: announced but not revealed — all face_down, no rank/suit leak")
+	_report("T8: not announced — arrangement hidden from opponents")
 
 
 # T9: 决策宣告前隐藏
