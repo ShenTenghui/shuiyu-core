@@ -16,6 +16,9 @@ class SessionData:
 	var sync: RefCounted         # GameSync
 	var user_to_pos: Dictionary = {}   # user_id → int (0-3)
 	var pos_to_user: Array = []        # [user_id, user_id, user_id, user_id]
+	# 多步 tanpai 协议暂存
+	var pending_tanpai_ci: int = -1           # 当前摊牌挑战者 idx
+	var pending_tanpai_banker_choice: String = ""  # "give" | "not_give"
 
 	func _init(p_controller: RefCounted, p_sync: RefCounted,
 			p_user_to_pos: Dictionary, p_pos_to_user: Array) -> void:
@@ -115,7 +118,7 @@ func generate_snapshots(room_id: String) -> Dictionary:
 
 # ── Command handling ──
 
-# 验证 + 路由。返回 {ok, error, snapshots (if ok)}
+# 验证 + 路由。返回 {ok, error}
 func handle_command(room_id: String, user_id: String, cmd_type: int, payload: Dictionary) -> Dictionary:
 	var sd: SessionData = _sessions.get(room_id) as SessionData
 	if not sd:
@@ -128,193 +131,219 @@ func handle_command(room_id: String, user_id: String, cmd_type: int, payload: Di
 	var gc: RefCounted = sd.controller
 	var state_before: String = _state_snapshot(gc)
 
+	var result: Dictionary
 	match cmd_type:
 		ProtocolTypes.CMD_GAME_ARRANGE:
-			return _handle_arrange(gc, pos, payload, state_before, room_id)
+			result = _handle_arrange(sd, gc, pos, payload)
 		ProtocolTypes.CMD_GAME_BET:
-			return _handle_bet(gc, pos, payload, state_before, room_id)
+			result = _handle_bet(sd, gc, pos, payload)
 		ProtocolTypes.CMD_GAME_DECIDE:
-			return _handle_decide(gc, pos, payload, state_before, room_id)
+			result = _handle_decide(sd, gc, pos, payload)
 		ProtocolTypes.CMD_GAME_TANPAI_BANKER:
-			return _handle_tanpai_banker(gc, pos, payload, state_before, room_id)
+			result = _handle_tanpai_banker(sd, gc, pos, payload)
 		ProtocolTypes.CMD_GAME_TANPAI_PASS:
-			return _handle_tanpai_pass(gc, pos, payload, state_before, room_id)
+			result = _handle_tanpai_pass(sd, gc, pos, payload)
 		ProtocolTypes.CMD_GAME_TANPAI_CHALLENGER:
-			return _handle_tanpai_challenger(gc, pos, payload, state_before, room_id)
+			result = _handle_tanpai_challenger(sd, gc, pos, payload)
 		ProtocolTypes.CMD_GAME_ANGONG:
-			return _handle_angong(gc, pos, payload, state_before, room_id)
+			result = _handle_angong(sd, gc, pos, payload)
 		ProtocolTypes.CMD_GAME_QIANGGONG_BANKER:
-			return _handle_qianggong_banker(gc, pos, payload, state_before, room_id)
+			result = _handle_qianggong_banker(sd, gc, pos, payload)
+		_:
+			result = {"ok": false, "error": "GAME_INVALID_ACTION"}
 
-	return {"ok": false, "error": "GAME_INVALID_ACTION"}
+	if not result.ok:
+		_verify_state_unchanged(state_before, gc, result.error)
+	return result
 
 
-func _handle_arrange(gc: RefCounted, pos: int, payload: Dictionary,
-		state_before: String, room_id: String) -> Dictionary:
+# ── Individual command handlers ──
+
+func _handle_arrange(sd: SessionData, gc: RefCounted, pos: int, payload: Dictionary) -> Dictionary:
 	if gc.phase != GameController.Phase.ALL_ARRANGING:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
 	var head: Array = payload.get("head", [])
 	var tail: Array = payload.get("tail", [])
 	if head.size() != 2 or tail.size() != 2:
-		return _reject("GAME_INVALID_ARRANGEMENT", state_before, gc)
+		return _err("GAME_INVALID_ARRANGEMENT")
 
-	# Validate indices are integers 0-3, no duplicates
 	var all_idx: Array = []
 	for v in head + tail:
 		if not (v is int) and not (v is float):
-			return _reject("GAME_INVALID_ARRANGEMENT", state_before, gc)
+			return _err("GAME_INVALID_ARRANGEMENT")
 		all_idx.append(int(v))
-
-	if all_idx.size() != 4:
-		return _reject("GAME_INVALID_ARRANGEMENT", state_before, gc)
 
 	var seen: Dictionary = {}
 	for idx in all_idx:
 		if idx < 0 or idx >= 4 or seen.has(idx):
-			return _reject("GAME_INVALID_ARRANGEMENT", state_before, gc)
+			return _err("GAME_INVALID_ARRANGEMENT")
 		seen[idx] = true
 
 	if not gc.submit_arrangement(pos, [all_idx[0], all_idx[1]], [all_idx[2], all_idx[3]]):
-		return _reject("GAME_INVALID_ARRANGEMENT", state_before, gc)
+		return _err("GAME_INVALID_ARRANGEMENT")
 
 	return {"ok": true}
 
 
-func _handle_bet(gc: RefCounted, pos: int, payload: Dictionary,
-		state_before: String, room_id: String) -> Dictionary:
+func _handle_bet(sd: SessionData, gc: RefCounted, pos: int, payload: Dictionary) -> Dictionary:
 	if gc.phase != GameController.Phase.BETTING:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
+	if pos == gc.banker_idx:
+		return _err("GAME_NOT_YOUR_TURN")
 
 	var amount: int = int(payload.get("amount", 0))
 	if amount < 1:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
 	if not gc.submit_bet(pos, amount):
-		return _reject("GAME_NOT_YOUR_TURN", state_before, gc)
+		return _err("GAME_NOT_YOUR_TURN")
 
 	return {"ok": true}
 
 
-func _handle_decide(gc: RefCounted, pos: int, payload: Dictionary,
-		state_before: String, room_id: String) -> Dictionary:
+func _handle_decide(sd: SessionData, gc: RefCounted, pos: int, payload: Dictionary) -> Dictionary:
 	if gc.phase != GameController.Phase.ALL_DECIDING:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
+	if pos == gc.banker_idx:
+		return _err("GAME_NOT_YOUR_TURN")
 
 	var action: String = payload.get("action", "")
-	var valid_actions: Array = [Types.DECISION_TANPAI, Types.DECISION_QIANGGONG, Types.DECISION_ANGONG, Types.DECISION_ZOUSHUI]
-	if action not in valid_actions:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+	var valid: Array = [Types.DECISION_TANPAI, Types.DECISION_QIANGGONG, Types.DECISION_ANGONG, Types.DECISION_ZOUSHUI]
+	if action not in valid:
+		return _err("GAME_INVALID_ACTION")
 
 	if not gc.submit_decision(pos, action):
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
 	return {"ok": true}
 
 
-func _handle_tanpai_banker(gc: RefCounted, pos: int, payload: Dictionary,
-		state_before: String, room_id: String) -> Dictionary:
+func _handle_tanpai_banker(sd: SessionData, gc: RefCounted, pos: int, payload: Dictionary) -> Dictionary:
 	if gc.phase != GameController.Phase.BANKER_QUEUE:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
+	if pos != gc.banker_idx:
+		return _err("GAME_NOT_YOUR_TURN")
 
 	var item: Dictionary = gc.get_current_challenger()
 	if item.is_empty() or item.action != Types.DECISION_TANPAI:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
-	var banker_give: String = payload.get("choice", "")
-	if banker_give not in [Types.TANPAI_BANKER_GIVE, Types.TANPAI_BANKER_NOT_GIVE]:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+	var banker_choice: String = payload.get("choice", "")
+	if banker_choice not in [Types.TANPAI_BANKER_GIVE, Types.TANPAI_BANKER_NOT_GIVE]:
+		return _err("GAME_INVALID_ACTION")
 
-	# Pass dummy values for pass/fan choices — they'll be filled by subsequent commands
-	if not gc.submit_tanpai(item.idx, banker_give, "", "", -1, -1):
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+	# 暂存 banker 选择，等待 pass 或 challenger 子命令提交
+	sd.pending_tanpai_ci = item.idx
+	sd.pending_tanpai_banker_choice = banker_choice
+	return {"ok": true, "pending": true}
+
+
+func _handle_tanpai_pass(sd: SessionData, gc: RefCounted, pos: int, payload: Dictionary) -> Dictionary:
+	if sd.pending_tanpai_ci < 0 or sd.pending_tanpai_banker_choice != Types.TANPAI_BANKER_GIVE:
+		return _err("GAME_INVALID_ACTION")
+	if pos != sd.pending_tanpai_ci:
+		return _err("GAME_NOT_YOUR_TURN")
+
+	var pass_choice: String = payload.get("choice", "")
+	if pass_choice not in [Types.TANPAI_PASS_GUO, Types.TANPAI_PASS_YINGYAO]:
+		return _err("GAME_INVALID_ACTION")
+
+	var h_flip: int = -1
+	var t_flip: int = -1
+	if pass_choice == Types.TANPAI_PASS_YINGYAO:
+		h_flip = clampi(int(payload.get("head_flip", 0)), 0, 1)
+		t_flip = clampi(int(payload.get("tail_flip", 0)), 0, 1)
+
+	var ci: int = sd.pending_tanpai_ci
+	_clear_pending_tanpai(sd)
+
+	if not gc.submit_tanpai(ci, Types.TANPAI_BANKER_GIVE, pass_choice, "", h_flip, t_flip):
+		return _err("GAME_INVALID_ACTION")
 
 	return {"ok": true}
 
 
-func _handle_tanpai_pass(gc: RefCounted, pos: int, payload: Dictionary,
-		state_before: String, room_id: String) -> Dictionary:
-	# tanpai_pass is called when banker gave "give" and NOW the challenger decides yingyao or guo
-	# But looking at the controller API, submit_tanpai already bundles everything.
-	# tanpai_pass is a sub-command that comes after tanpai_banker if banker gave.
-	# However, the current controller API bundles bank_choice + pass_choice into one submit_tanpai call.
-	# For M1D-03, we handle this as a multi-step interaction:
-	# 1. game.tanpai_banker {choice: "give"} → submit_tanpai with give
-	# 2. game.tanpai_pass {choice: "guo"|"yingyao"} → need to re-submit with pass choice
-	#
-	# Since submit_tanpai is bundled, we check if the current item's banker choice was "give"
-	# and then call submit_tanpai again with the full data.
-	# Actually, looking more carefully: after submit_tanpai(banker_give="give", ...), the queue
-	# already advances. So tanpai_pass can't work as a separate step with the current API.
-	# Solution: For M1D-03, interpret tanpai_pass as a re-submission that replaces the previous
-	# submit with the pass_choice filled in.
-	#
-	# Wait — looking at the controller again: submit_tanpai always advances _queue_idx.
-	# So after calling submit_tanpai with "give", the queue already moved past this challenger.
-	# This means tanpai_pass as a separate command doesn't fit the current controller API.
-	#
-	# The protocol was defined in M1D-00 with separate sub-commands. For M1D-03, I need to
-	# make these work with the current controller. The simplest approach:
-	# - tanpai_banker with "give" sets the banker choice but does NOT advance the queue yet
-	# - tanpai_pass or tanpai_challenger then completes the submission and advances
-	#
-	# This requires a slight change in how we call the controller. Let me handle this in the
-	# session manager by tracking pending tanpai state.
+func _handle_tanpai_challenger(sd: SessionData, gc: RefCounted, pos: int, payload: Dictionary) -> Dictionary:
+	if sd.pending_tanpai_ci < 0 or sd.pending_tanpai_banker_choice != Types.TANPAI_BANKER_NOT_GIVE:
+		return _err("GAME_INVALID_ACTION")
+	if pos != sd.pending_tanpai_ci:
+		return _err("GAME_NOT_YOUR_TURN")
 
-	return _reject("GAME_INVALID_ACTION", state_before, gc)
+	var fan_choice: String = payload.get("choice", "")
+	var valid_fan: Array = [
+		Types.TANPAI_CHALLENGER_RENSHU,
+		Types.TANPAI_CHALLENGER_FAN_HEAD,
+		Types.TANPAI_CHALLENGER_FAN_TAIL,
+		Types.TANPAI_CHALLENGER_FAN_BOTH,
+	]
+	if fan_choice not in valid_fan:
+		return _err("GAME_INVALID_ACTION")
 
+	var h_flip: int = -1
+	var t_flip: int = -1
+	if fan_choice == Types.TANPAI_CHALLENGER_FAN_HEAD or fan_choice == Types.TANPAI_CHALLENGER_FAN_BOTH:
+		h_flip = clampi(int(payload.get("head_flip", 0)), 0, 1)
+	if fan_choice == Types.TANPAI_CHALLENGER_FAN_TAIL or fan_choice == Types.TANPAI_CHALLENGER_FAN_BOTH:
+		t_flip = clampi(int(payload.get("tail_flip", 0)), 0, 1)
 
-func _handle_tanpai_challenger(gc: RefCounted, pos: int, payload: Dictionary,
-		state_before: String, room_id: String) -> Dictionary:
-	return _reject("GAME_INVALID_ACTION", state_before, gc)
+	var ci: int = sd.pending_tanpai_ci
+	_clear_pending_tanpai(sd)
+
+	if not gc.submit_tanpai(ci, Types.TANPAI_BANKER_NOT_GIVE, "", fan_choice, h_flip, t_flip):
+		return _err("GAME_INVALID_ACTION")
+
+	return {"ok": true}
 
 
-func _handle_angong(gc: RefCounted, pos: int, payload: Dictionary,
-		state_before: String, room_id: String) -> Dictionary:
+func _handle_angong(sd: SessionData, gc: RefCounted, pos: int, payload: Dictionary) -> Dictionary:
 	if gc.phase != GameController.Phase.BANKER_QUEUE:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
+	if pos != gc.banker_idx:
+		return _err("GAME_NOT_YOUR_TURN")
 
 	var item: Dictionary = gc.get_current_challenger()
 	if item.is_empty() or item.action != Types.DECISION_ANGONG:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
 	var choice: String = payload.get("choice", "")
 	if choice not in [Types.ANGONG_OPEN, Types.ANGONG_NOT_OPEN]:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
 	if not gc.submit_angong(item.idx, choice):
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
 	return {"ok": true}
 
 
-func _handle_qianggong_banker(gc: RefCounted, pos: int, payload: Dictionary,
-		state_before: String, room_id: String) -> Dictionary:
+func _handle_qianggong_banker(sd: SessionData, gc: RefCounted, pos: int, payload: Dictionary) -> Dictionary:
 	if gc.phase != GameController.Phase.BANKER_QUEUE:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
+	if pos != gc.banker_idx:
+		return _err("GAME_NOT_YOUR_TURN")
 
 	var item: Dictionary = gc.get_current_challenger()
 	if item.is_empty() or item.action != Types.DECISION_QIANGGONG:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
 	var choice: String = payload.get("choice", "")
 	if choice not in [Types.QIANG_GONG_BI_TOU, Types.QIANG_GONG_BI_WEI]:
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
 	if not gc.submit_qianggong(item.idx, choice):
-		return _reject("GAME_INVALID_ACTION", state_before, gc)
+		return _err("GAME_INVALID_ACTION")
 
 	return {"ok": true}
 
+
+# ── Round auto-advance ──
 
 # 如果当前小局结束且未 GAME_OVER，自动启动下一小局
 func maybe_advance_round(room_id: String) -> bool:
 	var sd: SessionData = _sessions.get(room_id) as SessionData
 	if not sd: return false
-
 	var gc: RefCounted = sd.controller
-	if gc.is_game_over():
-		return false
+	if gc.is_game_over(): return false
 	if gc.phase == GameController.Phase.ROUND_END:
 		gc.start_round()
 		return true
@@ -323,18 +352,23 @@ func maybe_advance_round(room_id: String) -> bool:
 
 # ── Helpers ──
 
-func _reject(error_code: String, state_before: String, gc: RefCounted) -> Dictionary:
-	# Verify controller state unchanged
+func _err(code: String) -> Dictionary:
+	return {"ok": false, "error": code}
+
+
+func _clear_pending_tanpai(sd: SessionData) -> void:
+	sd.pending_tanpai_ci = -1
+	sd.pending_tanpai_banker_choice = ""
+
+
+func _verify_state_unchanged(state_before: String, gc: RefCounted, error_code: String) -> void:
 	var state_after: String = _state_snapshot(gc)
 	if state_before != state_after:
 		push_error("[GSM] CONTROLLER STATE CHANGED ON REJECTION! code=%s" % error_code)
-	return {"ok": false, "error": error_code}
 
 
 func _state_snapshot(gc: RefCounted) -> String:
-	# Lightweight snapshot for rejection verification
 	var fs: Dictionary = gc.export_full_state()
-	# Remove deck (changes per shuffle) and log (grows)
 	fs.erase("deck")
 	fs.erase("log")
 	return JSON.stringify(fs)
