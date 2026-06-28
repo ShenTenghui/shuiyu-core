@@ -20,13 +20,26 @@ func generate_snapshots(full_state: Dictionary) -> Array:
 func _build_snapshot(fs: Dictionary, your_pos: int) -> Dictionary:
 	var src_players: Array = fs.players
 	var phase: int = fs.phase
-	var revealed: Array = fs.revealed
-	var announced: Array = fs.announced
+	var revealed_bools: Array = fs.revealed
+	var announced_bools: Array = fs.announced
+
+	# 转换为 card_visibility.gd 期望的 int 数组形态
+	var revealed_ids: Array = []
+	var announced_ids: Array = []
+	for i in range(4):
+		if revealed_bools[i]: revealed_ids.append(i)
+		if announced_bools[i]: announced_ids.append(i)
+
+	# 构建 {idx: challenger_state} 映射
+	var challenger_states: Dictionary = {}
+	for i in range(4):
+		var cs: Dictionary = src_players[i].get("challenger_state", {})
+		if not cs.is_empty():
+			challenger_states[i] = cs
 
 	var snap_players: Array = []
 	for i in range(4):
 		var src: Dictionary = src_players[i]
-		var cs: Dictionary = src.get("challenger_state", {})
 		var sp: Dictionary = {
 			"position": src.position,
 			"name": src.name,
@@ -40,14 +53,13 @@ func _build_snapshot(fs: Dictionary, your_pos: int) -> Dictionary:
 		else:
 			sp.cards = []
 
-		sp.arrangement = _clip_arrangement(src, cs, i, your_pos, phase, revealed, announced)
-		sp.decision = _clip_decision(src, cs, i, your_pos, phase, revealed, announced)
+		sp.arrangement = _clip_arrangement(src, i, your_pos, phase, revealed_ids, announced_ids, challenger_states)
+		sp.decision = _clip_decision(src, i, your_pos, phase, announced_bools)
 
-		# revealed: receiver perspective
 		if i == your_pos:
 			sp.revealed = true
 		else:
-			sp.revealed = _is_arr_visible(i, your_pos, phase, cs, revealed, announced)
+			sp.revealed = _is_arr_visible(i, your_pos, phase, src, revealed_ids, announced_ids)
 
 		snap_players.append(sp)
 
@@ -63,15 +75,16 @@ func _build_snapshot(fs: Dictionary, your_pos: int) -> Dictionary:
 	}
 
 
-func _clip_arrangement(src: Dictionary, cs: Dictionary, pos: int, your_pos: int, phase: int, revealed: Array, announced: Array) -> Dictionary:
+func _clip_arrangement(src: Dictionary, pos: int, your_pos: int, phase: int,
+		revealed_ids: Array, announced_ids: Array, challenger_states: Dictionary) -> Dictionary:
 	var arr: Dictionary = src.get("arrangement", {})
 	if arr.is_empty():
 		return {}
 
-	if not _is_arr_visible(pos, your_pos, phase, cs, revealed, announced):
+	if not _is_arr_visible_by_pos(pos, your_pos, phase, src, revealed_ids, announced_ids):
 		return {}
 
-	var flags: Array = _get_face_flags(pos, your_pos, phase, cs, revealed, announced)
+	var flags: Array = _get_face_flags(pos, your_pos, phase, revealed_ids, announced_ids, challenger_states)
 	var fh: Array = arr.get("fishHead", [])
 	var ft: Array = arr.get("fishTail", [])
 
@@ -88,33 +101,40 @@ func _clip_arrangement(src: Dictionary, cs: Dictionary, pos: int, your_pos: int,
 	return {
 		"head": head_out,
 		"tail": tail_out,
-		"desc": arr.get("desc", "") if not (pos != your_pos and _all_face_down(flags)) else "",
+		"desc": _clip_desc(arr, pos, your_pos, flags),
 	}
 
 
-func _get_face_flags(pos: int, your_pos: int, phase: int, cs: Dictionary, revealed: Array, announced: Array) -> Array:
+func _get_face_flags(pos: int, your_pos: int, phase: int,
+		revealed_ids: Array, announced_ids: Array, challenger_states: Dictionary) -> Array:
 	var temp_player: Dictionary = {"isHuman": (pos == your_pos)}
-	var cs_copy: Dictionary = {}
-	for key in cs.keys():
-		cs_copy[key] = cs[key]
-	return CardVisibility.get_card_flags(pos, temp_player, phase, revealed, announced, cs_copy)
+	return CardVisibility.get_card_flags(pos, temp_player, phase, revealed_ids, announced_ids, challenger_states)
 
 
-func _is_arr_visible(pos: int, your_pos: int, phase: int, cs: Dictionary, revealed: Array, announced: Array) -> bool:
+func _is_arr_visible_by_pos(pos: int, your_pos: int, phase: int, src: Dictionary,
+		revealed_ids: Array, announced_ids: Array) -> bool:
 	if pos == your_pos: return true
 	if phase == Types.Phase.GAME_OVER: return true
-	if revealed[pos] or announced[pos]: return true
+	if revealed_ids.has(pos) or announced_ids.has(pos): return true
+	var cs: Dictionary = src.get("challenger_state", {})
 	if cs.get("skipped", false): return true
 	if cs.get("doubleZeroChoice") == Types.DOUBLE_ZERO_ZOUSHUI: return true
 	return false
 
 
-# M1D-02 P1: 对手决策仅在宣告后可见；自己始终可见自己。
-func _clip_decision(src: Dictionary, cs: Dictionary, pos: int, your_pos: int, phase: int, _revealed: Array, announced: Array) -> String:
+# 内部使用，接收 bool 数组（仅 decision 裁剪用）
+func _is_arr_visible(pos: int, your_pos: int, phase: int, src: Dictionary,
+		revealed_ids: Array, announced_ids: Array) -> bool:
+	return _is_arr_visible_by_pos(pos, your_pos, phase, src, revealed_ids, announced_ids)
+
+
+# M1D-02 P1: 对手决策仅在宣告后可见
+func _clip_decision(src: Dictionary, _cs: Dictionary, pos: int, your_pos: int, phase: int,
+		_revealed: Array, announced: Array) -> String:
 	if pos == your_pos:
-		return cs.get("decision", "")
-	if announced[pos] or phase == Types.Phase.GAME_OVER:
-		return cs.get("decision", "")
+		return src.get("challenger_state", {}).get("decision", "")
+	if (announced[pos] if pos < announced.size() else false) or phase == Types.Phase.GAME_OVER:
+		return src.get("challenger_state", {}).get("decision", "")
 	return ""
 
 
@@ -126,9 +146,22 @@ func _deep_copy_cards(cards: Array) -> Array:
 	return out
 
 
+# P1 修复: face_down 的牌不泄露 rank/suit
 func _card_to_dict(card, face_down: bool) -> Dictionary:
 	if card == null: return {}
-	return {"rank": card.get("rank", ""), "suit": card.get("suit", ""), "face_up": not face_down}
+	if face_down:
+		return {"face_up": false}
+	return {
+		"rank": card.get("rank", ""),
+		"suit": card.get("suit", ""),
+		"face_up": true,
+	}
+
+
+func _clip_desc(arr: Dictionary, pos: int, your_pos: int, flags: Array) -> String:
+	if pos == your_pos: return arr.get("desc", "")
+	if _all_face_down(flags): return ""
+	return arr.get("desc", "")
 
 
 func _all_face_down(flags: Array) -> bool:
