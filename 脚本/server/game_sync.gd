@@ -162,3 +162,9 @@ func _all_face_down(flags: Array) -> bool:
 	for f in flags:
 		if not f: return false
 	return true
+
+
+func _any_face_down(flags: Array) -> bool:
+	for f in flags:
+		if f: return true
+	return false
