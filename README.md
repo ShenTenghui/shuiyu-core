@@ -37,10 +37,10 @@ Windows 下将 `godot` 替换为本机 Godot 控制台可执行文件路径。�
 
 ## 当前范围
 
-这是一个独立源码快照，不包含整款游戏的界面、美术、字体、音效、登录数据库、训练检查点或大型策略表。双击运行项目会执行控制器测试，退出后结束，不会打开完整打牌界面。
+这是从原工程提取的独立核心模块，不包含整款游戏的界面、美术、字体、音效、登录数据库、训练检查点或大型策略表。双击运行项目会执行控制器测试，退出后结束，不会打开完整打牌界面。
 
 原游戏里的 AI 策略模块及训练数据不在这里。测试辅助只负责驱动对局，不验证训练策略的强度或收敛效果。
 
 已在 Ubuntu 24.04 / Godot 4.6.3 的 [GitHub Actions](https://github.com/ShenTenghui/shuiyu-core/actions/runs/41847254924) 中通过三组 headless 场景检查：控制器 5/5、快照 10/10、命令处理 15/15，共 30 项。这不是四个真实客户端的端到端联网验收；Windows 本机尚未复跑。
 
-来源和文件校验值见 [PROVENANCE.md](PROVENANCE.md) 与 [source-files.json](source-files.json)。
+仓库保留了这些核心文件在 2026 年 6 月的 77 次原始开发提交。作者、时间和提交说明保持原样；过滤未公开内容后提交编号有所变化，对照见 [历史映射](docs/history-map.csv)。来源和文件校验值见 [PROVENANCE.md](PROVENANCE.md) 与 [source-files.json](source-files.json)。
