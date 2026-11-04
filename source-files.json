@@ -1,0 +1,250 @@
+{
+  "source_commit": "de42fab12986d0e3182e707575625103bb36ad30",
+  "copied_files": [
+    {
+      "path": "test/unit/test_m1d01_controller.gd",
+      "source_sha256": "76211ae71eedb5d4acef0e180119628628941d72e4b0e1fcf4bc491d7ed8f851",
+      "published_sha256": "fc7e959732ed5b35473b7ce629fe8319cb53cbd9ff84933adc458e291aeab226",
+      "bytes": 8406,
+      "adapted": true
+    },
+    {
+      "path": "test/unit/test_m1d01_controller.gd.uid",
+      "source_sha256": "337e220c2e8f07985f31a12ecc33772408cc74cce53e1c452d054f7998ed2070",
+      "published_sha256": "337e220c2e8f07985f31a12ecc33772408cc74cce53e1c452d054f7998ed2070",
+      "bytes": 19,
+      "adapted": false
+    },
+    {
+      "path": "test/unit/test_m1d01_controller.tscn",
+      "source_sha256": "4a7d41e6e18c488739d2a901193315efefb29647fc8289342c7926a6e136feed",
+      "published_sha256": "4a7d41e6e18c488739d2a901193315efefb29647fc8289342c7926a6e136feed",
+      "bytes": 212,
+      "adapted": false
+    },
+    {
+      "path": "test/unit/test_m1d02_snapshot.gd",
+      "source_sha256": "525b55c0cdde69641847bc5dcd276e4c5108435b0c4c0075aeb053b4bf903727",
+      "published_sha256": "f67128666f47d9212a888b706a8721f16b6f58bfd1a8f50ef28efa17cb5a3e4e",
+      "bytes": 16030,
+      "adapted": true
+    },
+    {
+      "path": "test/unit/test_m1d02_snapshot.gd.uid",
+      "source_sha256": "88fc00dde516c5d8f6cc82db5e1573f852452cd96f0a9fece40959060e0f1152",
+      "published_sha256": "88fc00dde516c5d8f6cc82db5e1573f852452cd96f0a9fece40959060e0f1152",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "test/unit/test_m1d02_snapshot.tscn",
+      "source_sha256": "6b0960a93f42aca3432d73d4bd2c52ba58f0227c9a4aed1aec40f10d602ecbcf",
+      "published_sha256": "6b0960a93f42aca3432d73d4bd2c52ba58f0227c9a4aed1aec40f10d602ecbcf",
+      "bytes": 206,
+      "adapted": false
+    },
+    {
+      "path": "test/unit/test_m1d03_network.gd",
+      "source_sha256": "7c99e99c4786989c9524882ab9650912a3f82be8e6ec453c498ae0162a7fe8f0",
+      "published_sha256": "140cbf78c374d2a6353c27eb457aeec6303bef2e8053544bf90ae70d4c080845",
+      "bytes": 23321,
+      "adapted": true
+    },
+    {
+      "path": "test/unit/test_m1d03_network.tscn",
+      "source_sha256": "2839f082c4ae4d95594d5ba03e1ed28f30227e42cc5795e84f04fa5611c23cb7",
+      "published_sha256": "2839f082c4ae4d95594d5ba03e1ed28f30227e42cc5795e84f04fa5611c23cb7",
+      "bytes": 203,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/arrange.gd",
+      "source_sha256": "6e498dbe44c96cb4b22fc2a921a13ae91b8d5749d50e49e2190d4e8c011382b3",
+      "published_sha256": "6e498dbe44c96cb4b22fc2a921a13ae91b8d5749d50e49e2190d4e8c011382b3",
+      "bytes": 3869,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/arrange.gd.uid",
+      "source_sha256": "6f9161701a33a00a389f7f01045c075475924a68910c755d2d67d730f24beab7",
+      "published_sha256": "6f9161701a33a00a389f7f01045c075475924a68910c755d2d67d730f24beab7",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/card.gd",
+      "source_sha256": "ad054ff249ee0b8f95a88fea378a77afc856efffce67ecd2760f952d5ddfd3d5",
+      "published_sha256": "ad054ff249ee0b8f95a88fea378a77afc856efffce67ecd2760f952d5ddfd3d5",
+      "bytes": 1900,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/card.gd.uid",
+      "source_sha256": "dab1ac7dbde1cdf32e640439de8b326970d5b38ec57a350843381c5735a52a86",
+      "published_sha256": "dab1ac7dbde1cdf32e640439de8b326970d5b38ec57a350843381c5735a52a86",
+      "bytes": 19,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/card_visibility.gd",
+      "source_sha256": "c168f1b4bbb6848c28b6afecdb2ac43c35d2a8179185348e07166acc8fef023d",
+      "published_sha256": "c168f1b4bbb6848c28b6afecdb2ac43c35d2a8179185348e07166acc8fef023d",
+      "bytes": 4271,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/card_visibility.gd.uid",
+      "source_sha256": "113ea1b9263d61e58010a3514c014deb9160dc690f293c27cbb7d08b9f50499c",
+      "published_sha256": "113ea1b9263d61e58010a3514c014deb9160dc690f293c27cbb7d08b9f50499c",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/ccw_utils.gd",
+      "source_sha256": "4b8b0e8c0a58d05863bd920ca053fef5e8785f989f9ff4c7b738665e82a34698",
+      "published_sha256": "4b8b0e8c0a58d05863bd920ca053fef5e8785f989f9ff4c7b738665e82a34698",
+      "bytes": 1397,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/ccw_utils.gd.uid",
+      "source_sha256": "22702cf34ac465a1ed89e1fb623c8410d20101f3027934b074b9bfbd4788fcb2",
+      "published_sha256": "22702cf34ac465a1ed89e1fb623c8410d20101f3027934b074b9bfbd4788fcb2",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/compare.gd",
+      "source_sha256": "8c58c79eefafebadfcd770132f720e0df9882565b41421ddb46e8a0e029997ff",
+      "published_sha256": "8c58c79eefafebadfcd770132f720e0df9882565b41421ddb46e8a0e029997ff",
+      "bytes": 3096,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/compare.gd.uid",
+      "source_sha256": "42ce272de8d7e34f7e2935dc99fb78d4ac7654e7930e3eb4a0660e190ae17eb5",
+      "published_sha256": "42ce272de8d7e34f7e2935dc99fb78d4ac7654e7930e3eb4a0660e190ae17eb5",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/constants.gd",
+      "source_sha256": "936cf91a8680a99397a66fecf86357b8a2c8dfa655eaf5ea0e12d64774bf2b31",
+      "published_sha256": "936cf91a8680a99397a66fecf86357b8a2c8dfa655eaf5ea0e12d64774bf2b31",
+      "bytes": 1541,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/constants.gd.uid",
+      "source_sha256": "14a9be7e40bf25a425e7a53c8f8fb05fdf156fc9da12c5af3daacdff6154cab7",
+      "published_sha256": "14a9be7e40bf25a425e7a53c8f8fb05fdf156fc9da12c5af3daacdff6154cab7",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/evaluate.gd",
+      "source_sha256": "c1bb4c71814c78652a1fbf291631d8467bb00c3a898ab834c1ee966b4c960f3f",
+      "published_sha256": "c1bb4c71814c78652a1fbf291631d8467bb00c3a898ab834c1ee966b4c960f3f",
+      "bytes": 1797,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/evaluate.gd.uid",
+      "source_sha256": "305480b1dc442f80f1afa3dc61ebaaee8f5752166d75ff471687fd117d19b75b",
+      "published_sha256": "305480b1dc442f80f1afa3dc61ebaaee8f5752166d75ff471687fd117d19b75b",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/scoring.gd",
+      "source_sha256": "e6cf484a36ad87bce821db32612605aa8ebda97067fa8e1aad0b603e37a70aec",
+      "published_sha256": "e6cf484a36ad87bce821db32612605aa8ebda97067fa8e1aad0b603e37a70aec",
+      "bytes": 7321,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/scoring.gd.uid",
+      "source_sha256": "b634e3ba4fd4249fe7ad8ccbd862aeb064f24705cb095f7c7c390125fc36ebd7",
+      "published_sha256": "b634e3ba4fd4249fe7ad8ccbd862aeb064f24705cb095f7c7c390125fc36ebd7",
+      "bytes": 18,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/types.gd",
+      "source_sha256": "cd056685b3a81b6499579e93f344d34ce5858e3511e619cb7f98a6edd75e891a",
+      "published_sha256": "cd056685b3a81b6499579e93f344d34ce5858e3511e619cb7f98a6edd75e891a",
+      "bytes": 2556,
+      "adapted": false
+    },
+    {
+      "path": "脚本/core/types.gd.uid",
+      "source_sha256": "5c0b17c7dd7dea76b848294ce0817763ad9ff32a3adf282e6166e168b6246a00",
+      "published_sha256": "5c0b17c7dd7dea76b848294ce0817763ad9ff32a3adf282e6166e168b6246a00",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "脚本/server/game_controller.gd",
+      "source_sha256": "f482a87d957fbde6e70e1c3550577e33717a33731507fa15ba156c54ee2a5ac8",
+      "published_sha256": "f482a87d957fbde6e70e1c3550577e33717a33731507fa15ba156c54ee2a5ac8",
+      "bytes": 19207,
+      "adapted": false
+    },
+    {
+      "path": "脚本/server/game_controller.gd.uid",
+      "source_sha256": "f6398263ab7b4aaffac46e08a4bdfa518b6da693ce2361de1cd8ecadbf4e9732",
+      "published_sha256": "f6398263ab7b4aaffac46e08a4bdfa518b6da693ce2361de1cd8ecadbf4e9732",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "脚本/server/game_dealer.gd",
+      "source_sha256": "7dd7987bb721856f841a1283d21c31622820cef0a799d77f14aea682611fb382",
+      "published_sha256": "7dd7987bb721856f841a1283d21c31622820cef0a799d77f14aea682611fb382",
+      "bytes": 913,
+      "adapted": false
+    },
+    {
+      "path": "脚本/server/game_dealer.gd.uid",
+      "source_sha256": "63b5a5b7b9042a4351c6cbf301d4ce329af8ecafeaad60192be8b61d418dad88",
+      "published_sha256": "63b5a5b7b9042a4351c6cbf301d4ce329af8ecafeaad60192be8b61d418dad88",
+      "bytes": 20,
+      "adapted": false
+    },
+    {
+      "path": "脚本/server/game_session_manager.gd",
+      "source_sha256": "e932ddd22805880bb8dfc7c5146b27294e3abfcf0cf2515d2cdb3cf72afddb0a",
+      "published_sha256": "e932ddd22805880bb8dfc7c5146b27294e3abfcf0cf2515d2cdb3cf72afddb0a",
+      "bytes": 12054,
+      "adapted": false
+    },
+    {
+      "path": "脚本/server/game_sync.gd",
+      "source_sha256": "193e995b961f427e7310ea5d8e02e826a0befae95e5af3a134dee0fc0fe61359",
+      "published_sha256": "193e995b961f427e7310ea5d8e02e826a0befae95e5af3a134dee0fc0fe61359",
+      "bytes": 5241,
+      "adapted": false
+    },
+    {
+      "path": "脚本/server/game_sync.gd.uid",
+      "source_sha256": "0cb826ca92d9d26da10d311c7bd08a7e72df822e48a70dc6af42dd3c967afdfa",
+      "published_sha256": "0cb826ca92d9d26da10d311c7bd08a7e72df822e48a70dc6af42dd3c967afdfa",
+      "bytes": 19,
+      "adapted": false
+    },
+    {
+      "path": "脚本/shared/protocol_types.gd",
+      "source_sha256": "bf1a9e41d71e2ddd48d1c56115dd18f7b37da78fa38f8ff83bdd088998276902",
+      "published_sha256": "bf1a9e41d71e2ddd48d1c56115dd18f7b37da78fa38f8ff83bdd088998276902",
+      "bytes": 2777,
+      "adapted": false
+    },
+    {
+      "path": "脚本/shared/protocol_types.gd.uid",
+      "source_sha256": "2a2b624c8e89612594599e19cd13382e2263c9c11e90a52542efdfa72a21d905",
+      "published_sha256": "2a2b624c8e89612594599e19cd13382e2263c9c11e90a52542efdfa72a21d905",
+      "bytes": 20,
+      "adapted": false
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+name: Godot headless tests
+
+"on":
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  headless:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download and verify Godot 4.6.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot_dir="$RUNNER_TEMP/godot-4.6.3"
+          mkdir -p "$godot_dir"
+          curl --fail --location --retry 3 \
+            'https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip' \
+            --output "$godot_dir/godot.zip"
+          printf '%s  %s\n' \
+            'd0bc2113065e481c9c2c2b2c37daa4e8be3fe9e27f0ab9ab0b6096e9a37907f3' \
+            "$godot_dir/godot.zip" | sha256sum --check
+          unzip -q "$godot_dir/godot.zip" -d "$godot_dir"
+          chmod +x "$godot_dir/Godot_v4.6.3-stable_linux.x86_64"
+          echo "GODOT_BIN=$godot_dir/Godot_v4.6.3-stable_linux.x86_64" >> "$GITHUB_ENV"
+
+      - name: Import script classes
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/godot-import.log"
+          "$GODOT_BIN" --headless --editor --path . --import 2>&1 | tee "$log"
+          if grep -Eq 'SCRIPT ERROR|ERROR:' "$log"; then
+            echo '::error::Godot reported an error during import.'
+            exit 1
+          fi
+
+      - name: Run controller, snapshot, and command tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scene in test_m1d01_controller test_m1d02_snapshot test_m1d03_network; do
+            log="$RUNNER_TEMP/$scene.log"
+            "$GODOT_BIN" --headless --path . "res://test/unit/$scene.tscn" 2>&1 | tee "$log"
+            if grep -Eq 'SCRIPT ERROR|ERROR:' "$log"; then
+              echo "::error::Godot reported an error in $scene."
+              exit 1
+            fi
+            if ! grep -Eq 'Results: [1-9][0-9]* passed, 0 failed' "$log"; then
+              echo "::error::Missing successful test summary for $scene."
+              exit 1
+            fi
+          done
