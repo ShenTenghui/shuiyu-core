@@ -41,6 +41,6 @@ Windows 下将 `godot` 替换为本机 Godot 控制台可执行文件路径。�
 
 原游戏里的 AI 策略模块及训练数据不在这里。测试辅助只负责驱动对局，不验证训练策略的强度或收敛效果。
 
-提取时做了文件与依赖核对；当前迁移电脑尚未找到可用的 Godot 可执行文件，因此尚未在这台电脑重新运行上述场景。后续验证结果以实际测试输出为准。
+已在 Ubuntu 24.04 / Godot 4.6.3 的 [GitHub Actions](https://github.com/ShenTenghui/shuiyu-core/actions/runs/41847254924) 中通过三组 headless 场景检查：控制器 5/5、快照 10/10、命令处理 15/15，共 30 项。这不是四个真实客户端的端到端联网验收；Windows 本机尚未复跑。
 
 来源和文件校验值见 [PROVENANCE.md](PROVENANCE.md) 与 [source-files.json](source-files.json)。
